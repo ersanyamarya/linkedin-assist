@@ -1,4 +1,11 @@
-import { createTextModal, DOM, UI, THEME } from "../shared";
+import {
+  createTextModal,
+  DOM,
+  MessagesSchema,
+  PostCommentsSchema,
+  THEME,
+  UI,
+} from "../shared";
 
 const randomLightHexColor = (): string => {
   let color = "#";
@@ -127,10 +134,10 @@ const extractPostContent = (commentBox: Element): string => {
  */
 const extractPostDetails = (
   commentBox: Element,
-): { postContent: string; comments: string[] } => {
-  const postContent = extractPostContent(commentBox);
+): { postText: string; comments: string[] } => {
+  const postText = extractPostContent(commentBox);
   const comments = extractPostComments(commentBox);
-  return { postContent, comments };
+  return { postText, comments };
 };
 
 const normalizeWhitespace = (value: string | null | undefined): string =>
@@ -239,7 +246,8 @@ const extractMessageSenderName = (args: {
   const raw = extractMessageSenderNameRaw(args.messageEvent);
   if (!args.viewerName) return raw;
 
-  return normalizeNameForCompare(raw) === normalizeNameForCompare(args.viewerName)
+  return normalizeNameForCompare(raw) ===
+    normalizeNameForCompare(args.viewerName)
     ? "ME"
     : raw;
 };
@@ -258,7 +266,10 @@ const extractMessageText = (messageEvent: Element): string => {
 /**
  * Extracts the last 3 messages from a messaging thread.
  */
-const extractLastThreeMessages = (): { sender: string; text: string }[] => {
+const extractLastThreeMessages = (): ReadonlyArray<{
+  sender: string;
+  text: string;
+}> => {
   const thread = getMessagingThreadElements();
   if (!thread) return [];
 
@@ -293,7 +304,7 @@ const extractLastThreeMessages = (): { sender: string; text: string }[] => {
  */
 const extractMessagingThreadDetails = (): {
   senderName: string;
-  messages: { sender: string; text: string }[];
+  messages: ReadonlyArray<{ sender: string; text: string }>;
 } => {
   const senderName = extractSenderName();
   const messages = extractLastThreeMessages();
@@ -354,23 +365,45 @@ const handleSuggestionClick = (commentBox: Element) => {
       return;
     }
 
+    const parsed = MessagesSchema.safeParse({ senderName, messages });
+    if (!parsed.success) {
+      console.warn("LinkedIn Assist messaging schema validation failed:", {
+        issues: parsed.error.issues,
+        senderName,
+        messages,
+      });
+      alert("Extracted messaging data could not be validated.");
+      return;
+    }
+
     console.log("LinkedIn Assist extracted from message:", {
       senderName,
       messages,
     });
-    createTextModal(JSON.stringify({ senderName, messages }, null, 2));
+    createTextModal(JSON.stringify(parsed.data, null, 2));
   } else {
-    const { postContent, comments } = extractPostDetails(commentBox);
-    if (!postContent) {
+    const { postText, comments } = extractPostDetails(commentBox);
+    if (!postText) {
       alert("Could not extract post content.");
       return;
     }
 
+    const parsed = PostCommentsSchema.safeParse({ postText, comments });
+    if (!parsed.success) {
+      console.warn("LinkedIn Assist post schema validation failed:", {
+        issues: parsed.error.issues,
+        postText,
+        comments,
+      });
+      alert("Extracted post data could not be validated.");
+      return;
+    }
+
     console.log("LinkedIn Assist extracted from post:", {
-      postContent,
+      postText,
       comments,
     });
-    createTextModal(JSON.stringify({ postContent, comments }, null, 2));
+    createTextModal(JSON.stringify(parsed.data, null, 2));
   }
 };
 
