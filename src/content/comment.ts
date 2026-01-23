@@ -1,5 +1,7 @@
 import {
   createTextModal,
+  buildMessagesPrompt,
+  buildPostCommentsPrompt,
   DOM,
   MessagesSchema,
   PostCommentsSchema,
@@ -380,7 +382,7 @@ const handleSuggestionClick = (commentBox: Element) => {
       senderName,
       messages,
     });
-    createTextModal(JSON.stringify(parsed.data, null, 2));
+    createTextModal(buildMessagesPrompt(parsed.data));
   } else {
     const { postText, comments } = extractPostDetails(commentBox);
     if (!postText) {
@@ -403,7 +405,7 @@ const handleSuggestionClick = (commentBox: Element) => {
       postText,
       comments,
     });
-    createTextModal(JSON.stringify(parsed.data, null, 2));
+    createTextModal(buildPostCommentsPrompt(parsed.data));
   }
 };
 
