@@ -19,6 +19,12 @@ export const DOM = {
     POST_ARTICLE_CONTAINER: "article.update-components-article",
     SINGLE_POST_COMMENT: "article.comments-comment-entity",
     SINGLE_POST_COMMENT_CONTENT: ".comments-comment-entity__content",
+    // Messaging thread selectors
+    MESSAGING_THREAD_CONTAINER: ".msg-thread",
+    MESSAGING_THREAD_PARTNER_NAME: ".msg-thread__link-to-profile h2",
+    MESSAGING_MESSAGE_LIST: "ul.msg-s-message-list-content",
+    MESSAGING_MESSAGE_EVENT: "li.msg-s-message-list__event",
+    MESSAGING_SENDER_NAME: "a[href*='/in/']",
   },
 
   ATTR: {
