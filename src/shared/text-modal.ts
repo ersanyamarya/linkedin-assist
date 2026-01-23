@@ -3,36 +3,38 @@
  * and a close button.
  */
 
+import { UI } from "./constants";
+
 export const createTextModal = (text: string): void => {
   // Create backdrop
   const backdrop = document.createElement("div");
-  backdrop.className = "linkedin-assist__modal-backdrop";
+  backdrop.className = UI.CLASSES.MODAL_BACKDROP;
   // Close modal function
   const closeModal = () => {
     backdrop.remove();
   };
   // Create modal container
   const modal = document.createElement("div");
-  modal.className = "linkedin-assist__modal";
+  modal.className = UI.CLASSES.MODAL;
 
   // Create modal content
   const content = document.createElement("div");
-  content.className = "linkedin-assist__modal-content";
+  content.className = UI.CLASSES.MODAL_CONTENT;
   content.textContent = text;
 
   // Create button container
   const buttonContainer = document.createElement("div");
-  buttonContainer.className = "linkedin-assist__modal-buttons";
+  buttonContainer.className = UI.CLASSES.MODAL_BUTTONS;
 
   // Create copy button
   const copyButton = document.createElement("button");
   copyButton.className =
-    "linkedin-assist__modal-button linkedin-assist__modal-button--primary";
-  copyButton.textContent = "Copy";
+    UI.CLASSES.MODAL_BUTTON + " " + UI.CLASSES.MODAL_BUTTON_PRIMARY;
+  copyButton.textContent = UI.TEXT.COPY_BUTTON;
   copyButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(text);
-      copyButton.textContent = "Copied!";
+      copyButton.textContent = UI.TEXT.COPIED_TEXT;
       setTimeout(() => {
         closeModal();
       }, 500);
@@ -44,8 +46,8 @@ export const createTextModal = (text: string): void => {
   // Create close button
   const closeButton = document.createElement("button");
   closeButton.className =
-    "linkedin-assist__modal-button linkedin-assist__modal-button--secondary";
-  closeButton.textContent = "Close";
+    UI.CLASSES.MODAL_BUTTON + " " + UI.CLASSES.MODAL_BUTTON_SECONDARY;
+  closeButton.textContent = UI.TEXT.CLOSE_BUTTON;
   closeButton.addEventListener("click", closeModal);
 
   // Close on backdrop click
