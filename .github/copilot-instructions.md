@@ -2,24 +2,49 @@
 
 ## Architecture & flow
 
-- This is a Chrome MV3 content-script extension; `public/manifest.json` registers `content/index.js` + `styles.css` on `https://www.linkedin.com/*`.
-- Entry point `src/content/index.ts` installs a `MutationObserver` and calls `loadedCommentScript` on DOM changes.
-- DOM extraction + UI injection live in `src/content/comment.ts`; it marks processed editors with `data-mutated` and adds CSS classes prefixed `linkedin-assist__`.
-- Modal UI is in `src/shared/text-modal.ts` (copy-to-clipboard + backdrop close).
+**Extension type**: Chrome MV3 content-script only (no background script, no popup).
+
+**Entry → DOM observation → DOM extraction → UI injection → Modal:**
+
+1. `src/content/index.ts`: Single `MutationObserver` watches `document.body` for new comment editors
+2. Calls `loadedCommentScript()` from `src/content/comment.ts` on every mutation
+3. Finds unprocessed editors (marked via `data-mutated` attribute), highlights them with random light color
+4. Attaches suggestion button to the editor row; clicking triggers DOM extraction and `createTextModal()`
+5. `src/shared/text-modal.ts` renders modal with copy + close buttons; backdrop click closes
+
+**DOM structure**: LinkedIn uses both feed list (`[data-view-name="feed-full-update"]`) and single post page layouts. Helpers (`findFeedContainer`, `findCommentaryTextElement`, `extractPostComments`) try multiple selectors to work in both contexts.
 
 ## Conventions and patterns
 
-- Keep DOM queries encapsulated in helpers (`findFeedContainer`, `findCommentaryTextElement`) and reuse them when adding new selectors.
-- When attaching UI, append to the editor row and add `linkedin-assist__*` classes; update styles in `public/styles.css`.
-- Avoid duplicate wiring: respect the `data-mutated` guard and prefer idempotent DOM changes.
+- **DOM selectors**: Centralized in `src/shared/constants.ts` (`DOM.SELECTORS`); reuse in helpers rather than inline queries.
+  - Example: `findFeedContainer()` tries feed list selector → listitem role → single post fallback.
+  - When adding new selectors, extend `DOM.SELECTORS` and update relevant helpers.
+- **UI attachment**: Append to editor row, use `linkedin-assist__*` class prefix, style in `public/styles.css` (not inline, except `randomLightHexColor()` for highlights).
+- **Idempotent DOM changes**: Always check `data-mutated` attribute before processing to avoid duplicate wiring on repeat mutations.
+- **Shared exports**: All constants, UI strings, SVG icons live in `src/shared/constants.ts` and re-export via `src/shared/index.ts`.
 
 ## Workflows
 
-- Install deps: `bun install`.
-- Dev watch build + copy: `bun run dev` (outputs to `dist/` and mirrors `public/`).
-- Build once: `bun run build`; clean: `bun run clean`.
+- **Setup**: `bun install`
+- **Dev** (watch + auto-rebuild): `bun run dev` → watches `src/**` + `public/**`, outputs to `dist/`, mirrors assets
+- **One-time build**: `bun run build` (clean + copy + compile)
+- **Clean**: `bun run clean`
+- **Load extension**: `chrome://extensions/` → Developer mode → Load unpacked → select `dist/` folder
 
-## Integration points
+## Key files & their roles
 
-- Runs only as content script on LinkedIn; there’s no background script or popup.
-- Output for the modal is JSON from `{ postContent, comments }` (see `handleSuggestionClick`).
+| File                       | Purpose                                                                 |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `src/content/index.ts`     | Registers mutation observer; entry point                                |
+| `src/content/comment.ts`   | Finds + highlights editors, attaches button, extracts post/comment text |
+| `src/shared/constants.ts`  | DOM selectors, UI classes, SVG icons, theme constants                   |
+| `src/shared/text-modal.ts` | Modal component with copy & close buttons                               |
+| `public/manifest.json`     | Content script registration; runs on `https://www.linkedin.com/*`       |
+| `public/styles.css`        | Modal + button styling                                                  |
+
+## Integration points & constraints
+
+- **No external APIs** (yet); pure DOM extraction.
+- **No background script or popup**; content script does all work.
+- **Bun + TypeScript 5** only; strict build process.
+- **Modal output**: Plain text (post + comments concatenated) to `navigator.clipboard`.
