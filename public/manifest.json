@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Assist",
+  "description": "Generates suggestions for LinkedIn messages and comments using AI.",
+  "version": "0.1.3",
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["content/index.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "scraper-light"
+  }
+}

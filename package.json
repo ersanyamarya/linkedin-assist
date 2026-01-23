@@ -1,0 +1,23 @@
+{
+  "name": "linkedin-assist",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "copy": "cp -r public/** dist/",
+    "build": "bun run clean && mkdir dist && bun run copy && bun build --target node ./src/** --outdir dist",
+    "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
+    "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\""
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/dom-chromium-ai": "^0.0.13",
+    "chokidar-cli": "^3.0.0",
+    "chrome-types": "^0.1.414",
+    "concurrently": "^9.2.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
