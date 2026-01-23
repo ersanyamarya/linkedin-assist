@@ -23,24 +23,45 @@ export const loadedCommentScript = () => {
 
 /**
  * Finds the feed container that owns the editor.
+ * Works on both feed list and single post pages.
  */
-const findFeedContainer = (commentBox: Element): Element | null =>
-  commentBox.closest(DOM.SELECTORS.FEED_FULL_UPDATE) ??
-  commentBox.closest(DOM.SELECTORS.ROLE_LISTITEM);
+const findFeedContainer = (commentBox: Element): Element | null => {
+  // Try feed list selectors first
+  let container =
+    commentBox.closest(DOM.SELECTORS.FEED_FULL_UPDATE) ??
+    commentBox.closest(DOM.SELECTORS.ROLE_LISTITEM);
+
+  // If not found, try single post page structure
+  if (!container) {
+    container = document.querySelector(
+      'div[class*="feed-shared-update-v2__control-menu-container"]',
+    );
+  }
+
+  return container;
+};
 
 /**
  * Finds the commentary text element for the feed item containing the editor.
+ * Works on both feed list and single post pages.
  */
 const findCommentaryTextElement = (commentBox: Element): Element | null => {
   const container = findFeedContainer(commentBox);
   if (!container) return null;
 
-  const commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
-  if (!commentary) return null;
+  // Try feed list selector first
+  let commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
+  if (commentary) {
+    return (
+      commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary
+    );
+  }
 
-  return (
-    commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary
-  );
+  // Try single post page selector
+  const postCommentary = container.querySelector(DOM.SELECTORS.POST_COMMENTARY);
+  if (postCommentary) return postCommentary;
+
+  return null;
 };
 
 /**
@@ -54,17 +75,35 @@ const extractCommentaryText = (commentary: Element): string => {
 
 /**
  * Extracts comment text from the comment list within the same feed item.
+ * Works on both feed list and single post pages.
  */
 const extractPostComments = (commentBox: Element): string[] => {
   const container = findFeedContainer(commentBox);
   if (!container) return [];
 
-  const commentaries = Array.from(
+  // Try feed list selectors first
+  let commentaries = Array.from(
     container.querySelectorAll(DOM.SELECTORS.COMMENT_COMMENTARY),
   );
 
-  return commentaries
-    .map(extractCommentaryText)
+  if (commentaries.length > 0) {
+    return commentaries
+      .map(extractCommentaryText)
+      .filter((comment) => comment.length > 0);
+  }
+
+  // Try single post page selectors
+  const singlePostComments = Array.from(
+    document.querySelectorAll(DOM.SELECTORS.SINGLE_POST_COMMENT),
+  );
+
+  return singlePostComments
+    .map((article) => {
+      const contentDiv = article.querySelector(
+        DOM.SELECTORS.SINGLE_POST_COMMENT_CONTENT,
+      );
+      return contentDiv?.textContent?.trim() ?? "";
+    })
     .filter((comment) => comment.length > 0);
 };
 
@@ -148,10 +187,23 @@ const addSuggestionButton = (commentBox: Element) => {
 
 /**
  * Extracts the feed post text from the commentary section.
+ * Handles both feed list and single post page structures.
  */
 const extractPostContent = (commentBox: Element): string => {
   const commentaryTextElement = findCommentaryTextElement(commentBox);
   if (!commentaryTextElement) return "";
+
+  // For single post page, get text from the commentary div directly
+  if (
+    commentaryTextElement.classList.contains(
+      "update-components-update-v2__commentary",
+    )
+  ) {
+    const postText = commentaryTextElement.textContent ?? "";
+    return postText.trim();
+  }
+
+  // For feed list, extract from expandable text or commentary
   const postText = commentaryTextElement.textContent ?? "";
   return postText.trim();
 };

@@ -13,6 +13,12 @@ export const DOM = {
     EXPANDABLE_TEXT_BOX: '[data-testid="expandable-text-box"]',
     COMMENT_COMMENTARY:
       '[data-view-name="comment-commentary"], [data-view-name="comment-reply-commentary"]',
+    // Single post page selectors
+    POST_COMMENTARY:
+      ".update-components-text.update-components-update-v2__commentary",
+    POST_ARTICLE_CONTAINER: "article.update-components-article",
+    SINGLE_POST_COMMENT: "article.comments-comment-entity",
+    SINGLE_POST_COMMENT_CONTENT: ".comments-comment-entity__content",
   },
 
   ATTR: {
