@@ -24,7 +24,8 @@ export const DOM = {
     MESSAGING_THREAD_PARTNER_NAME: ".msg-thread__link-to-profile h2",
     MESSAGING_MESSAGE_LIST: "ul.msg-s-message-list-content",
     MESSAGING_MESSAGE_EVENT: "li.msg-s-message-list__event",
-    MESSAGING_SENDER_NAME: "a[href*='/in/']",
+    // Prefer the message meta/header area to avoid matching profile links inside message body (@mentions).
+    MESSAGING_SENDER_NAME: ".msg-s-message-group__meta a[href*='/in/']",
   },
 
   ATTR: {

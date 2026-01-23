@@ -183,7 +183,17 @@ const extractMessageSenderNameRaw = (messageEvent: Element): string => {
     messageEvent.querySelectorAll(DOM.SELECTORS.MESSAGING_SENDER_NAME),
   );
 
-  const candidates = senderLinks
+  // Fallback: if LinkedIn changes the meta markup, try a broader search but avoid @mention links
+  // inside the message body.
+  const fallbackLinks = senderLinks.length
+    ? []
+    : Array.from(messageEvent.querySelectorAll("a[href*='/in/']")).filter(
+        (a) => a.closest("p") === null,
+      );
+
+  const linksToConsider = senderLinks.length > 0 ? senderLinks : fallbackLinks;
+
+  const candidates = linksToConsider
     .map((a) => normalizeWhitespace(a.textContent).replace(/^@/, ""))
     .filter((text) => text.length > 0)
     .filter((text) => !text.toLowerCase().startsWith("view "));
@@ -192,9 +202,6 @@ const extractMessageSenderNameRaw = (messageEvent: Element): string => {
     candidates.length > 0 ? candidates[candidates.length - 1] : undefined;
   return last ?? "Unknown";
 };
-
-const normalizeNameForCompare = (value: string): string =>
-  normalizeWhitespace(value).toLowerCase();
 
 const getMessagingThreadElements = (): {
   readonly threadContainer: Element;
@@ -215,43 +222,6 @@ const getMessagingThreadElements = (): {
   );
 
   return { threadContainer, messageEvents };
-};
-
-const inferViewerName = (args: {
-  readonly partnerName: string;
-  readonly messageEvents: ReadonlyArray<Element>;
-}): string => {
-  const partnerKey = normalizeNameForCompare(args.partnerName);
-
-  const counts = args.messageEvents
-    .map(extractMessageSenderNameRaw)
-    .map((name) => normalizeWhitespace(name))
-    .filter((name) => name.length > 0 && name !== "Unknown")
-    .filter((name) => normalizeNameForCompare(name) !== partnerKey)
-    .reduce<Record<string, { name: string; count: number }>>((acc, name) => {
-      const key = normalizeNameForCompare(name);
-      const existing = acc[key];
-      return {
-        ...acc,
-        [key]: { name, count: (existing?.count ?? 0) + 1 },
-      };
-    }, {});
-
-  const best = Object.values(counts).sort((a, b) => b.count - a.count)[0];
-  return best?.name ?? "";
-};
-
-const extractMessageSenderName = (args: {
-  readonly messageEvent: Element;
-  readonly viewerName: string;
-}): string => {
-  const raw = extractMessageSenderNameRaw(args.messageEvent);
-  if (!args.viewerName) return raw;
-
-  return normalizeNameForCompare(raw) ===
-    normalizeNameForCompare(args.viewerName)
-    ? "ME"
-    : raw;
 };
 
 const extractMessageText = (messageEvent: Element): string => {
@@ -275,20 +245,11 @@ const extractLastThreeMessages = (): ReadonlyArray<{
   const thread = getMessagingThreadElements();
   if (!thread) return [];
 
-  const partnerName = extractSenderName();
-  const viewerName = inferViewerName({
-    partnerName,
-    messageEvents: thread.messageEvents,
-  });
-
   const isNotNull = <T>(value: T | null): value is T => value !== null;
 
   return thread.messageEvents
     .map((event) => {
-      const senderName = extractMessageSenderName({
-        messageEvent: event,
-        viewerName,
-      });
+      const senderName = extractMessageSenderNameRaw(event);
       const content = extractMessageText(event);
       return content
         ? {
