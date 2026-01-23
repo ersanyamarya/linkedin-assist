@@ -8,14 +8,17 @@
     "copy": "cp -r public/** dist/",
     "build": "bun run clean && mkdir dist && bun run copy && bun build --target node ./src/** --outdir dist",
     "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
-    "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\""
+    "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\"",
+    "format": "ultracite fix"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.11",
     "@types/bun": "latest",
     "@types/dom-chromium-ai": "^0.0.13",
     "chokidar-cli": "^3.0.0",
     "chrome-types": "^0.1.414",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "ultracite": "7.0.12"
   },
   "peerDependencies": {
     "typescript": "^5"

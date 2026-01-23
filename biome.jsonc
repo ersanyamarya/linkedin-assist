@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core"],
+  "formatter": {
+    "lineWidth": 160,
+    "indentWidth": 2,
+    "bracketSpacing": true,
+    "attributePosition": "auto",
+    "indentStyle": "tab",
+    "bracketSameLine": true
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noEmptyBlockStatements": "off",
+        "noAlert": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off"
+      },
+      "nursery": {
+        "useMaxParams": "off",
+        "noIncrementDecrement": "off"
+      },
+      "style": {
+        "noMagicNumbers": "off",
+        "useNamingConvention": "off",
+        "useBlockStatements": "off",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "type"
+          }
+        }
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedKeys": "off",
+        "useSortedAttributes": "on",
+        "organizeImports": "on",
+        "useSortedProperties": "on"
+      },
+      "recommended": true
+    },
+    "enabled": true
+  }
+}

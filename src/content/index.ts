@@ -1,7 +1,7 @@
 import { loadedCommentScript } from "./comment";
 
 const observer = new MutationObserver(() => {
-  loadedCommentScript();
+	loadedCommentScript();
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
