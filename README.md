@@ -1,15 +1,16 @@
 # LinkedIn Assist
 
 A Chrome MV3 extension that adds a suggestion button to LinkedIn comment editors and
-captures post text + visible comments into a copyable modal. Runs as a content script only.
+message threads, extracting context into a copyable prompt modal. Runs as a content script only.
 
 ## Features
 
 - Injects a suggestion button next to each LinkedIn comment editor
-- Extracts post content and visible comment text from feed items
-- Displays extracted data in a modal with copy-to-clipboard functionality
+- Extracts post content + visible comments or recent message thread content
+- Collects prompt options (tone/length/intent) before building the final prompt
+- Displays the prompt in a modal with copy-to-clipboard functionality
 - Highlights unprocessed comment editors for visual confirmation
-- Works on both LinkedIn feed list and single-post page layouts
+- Works on LinkedIn feed list, single-post pages, and messaging threads
 
 ## Architecture
 
@@ -17,9 +18,11 @@ The extension runs entirely as a **content script** (no background or popup). He
 
 1. **DOM Observer** (`src/content/index.ts`): Watches `document.body` for DOM mutations
 2. **Comment Detection** (`src/content/comment.ts`): Identifies new comment editors via selector and marks them with `data-mutated`
-3. **UI Injection**: Highlights editor and attaches a lightbulb suggestion button
-4. **Text Extraction**: On button click, extracts post content + comments from the feed container
-5. **Modal Display** (`src/shared/text-modal.ts`): Shows extracted text with copy-to-clipboard button
+3. **UI Injection**: Attaches a lightbulb suggestion button to the editor row
+4. **Extraction + Validation**: On click, extracts post content + comments or message thread data and validates with Zod (`src/lib/schemas.ts`)
+5. **Prompt Flow**:
+    - **Messaging**: `createMessageReplyModal()` → `buildMessagesPrompt()` → `createTextModal()`
+    - **Post comments**: `createPostCommentPromptModal()` → `buildLinkedInCommentPrompt()` → `createTextModal()`
 
 The extension handles both **feed list** and **single post page** layouts by trying multiple DOM selectors.
 
@@ -30,10 +33,20 @@ src/
 ├── content/
 │   ├── index.ts           # Entry point; registers MutationObserver
 │   └── comment.ts         # DOM detection, extraction, UI attachment
-└── shared/
-    ├── constants.ts       # Centralized DOM selectors, UI classes, SVG icons
-    ├── index.ts           # Re-exports all shared utilities
-    └── text-modal.ts      # Modal component (copy + close buttons)
+├── lib/
+│   ├── constants.ts       # Centralized DOM selectors, UI classes, SVG icons
+│   ├── schemas.ts         # Zod schemas for extracted data and prompt options
+│   └── index.ts           # Re-exports shared utilities
+├── prompt/
+│   ├── messages.ts        # Message-thread prompt builder
+│   ├── post-comment.ts    # Post-comment prompt builder
+│   ├── prompt-utils.ts    # Shared prompt formatting helpers
+│   └── system-instructions.ts
+└── ui/
+    ├── message-reply-modal.ts # Messaging options modal
+    ├── post-prompt-modal.ts   # Post prompt options modal
+    ├── text-modal.ts          # Modal component (copy + close buttons)
+    └── components/            # Base modal + input building blocks
 
 public/
 ├── manifest.json          # MV3 manifest; registers content script
@@ -97,10 +110,11 @@ bun run clean
 
 ## Key patterns
 
-- **DOM selectors**: Centralized in `src/shared/constants.ts` for reuse and maintainability
+- **DOM selectors**: Centralized in `src/lib/constants.ts` for reuse and maintainability
 - **Idempotent DOM changes**: Editors marked with `data-mutated` to prevent duplicate processing
 - **UI prefix**: All extension UI elements use `linkedin-assist__*` class names to avoid conflicts
-- **Shared utilities**: Constants, icons, and text strings re-exported via `src/shared/index.ts`
+- **Prompt formatting**: Reuse helpers in `src/prompt/prompt-utils.ts` for consistent output
+- **Shared utilities**: Constants, icons, and text strings re-exported via `src/lib/index.ts`
 
 ---
 

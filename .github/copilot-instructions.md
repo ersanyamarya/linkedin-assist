@@ -7,7 +7,7 @@
 - `src/content/comment.ts` locates new editors (`DOM.SELECTORS.EDITABLE_COMMENT_BOX`), marks them with `DOM.ATTR.DATA_MUTATED`, injects the lightbulb button, and on click:
   - Branches to **messaging thread** (route `/messaging/thread/` or `.msg-thread`) vs **post + comments**.
   - Validates extraction via Zod schemas (`src/lib/schemas.ts`).
-  - Messaging: builds a prompt with `buildMessagesPrompt()` in `src/lib/prompt-builders.ts`, then shows `createTextModal()` (`src/ui/text-modal.ts`).
+  - Messaging: opens `createMessageReplyModal()` (`src/ui/message-reply-modal.ts`), builds a prompt with `buildMessagesPrompt()` (`src/prompt/messages.ts`), then shows `createTextModal()` (`src/ui/text-modal.ts`).
   - Post comments: opens `createPostCommentPromptModal()` (`src/ui/post-prompt-modal.ts`) to gather options, then builds the LLM prompt via `buildLinkedInCommentPrompt()` (`src/prompt/post-comment.ts`) which composes `SYSTEM_INSTRUCTIONS` (`src/prompt/system-instructions.ts`).
 
 ## Project-specific conventions
