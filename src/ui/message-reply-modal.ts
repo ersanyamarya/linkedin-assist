@@ -1,6 +1,18 @@
 import type { Messages } from "../lib";
 import { UI } from "../lib";
 import type { MessagePromptOptions } from "../prompt";
+import {
+	createModalBackdrop,
+	createModalButtons,
+	createModalContainer,
+	createModeToggle,
+	createReplyTypeSection,
+	createSection,
+	createSelect,
+	createTextArea,
+	createTwoColumnSection,
+	updateSelectOptions,
+} from "./components";
 
 type MessageReplyMode = "preset" | "prompt";
 
@@ -66,140 +78,6 @@ const pickDefaultRecipientName = (participants: readonly string[], yourName: str
 	return normalizedSender || fallback;
 };
 
-const createModalBackdrop = (onClose: () => void): HTMLDivElement => {
-	const backdrop = document.createElement("div");
-	backdrop.className = UI.CLASSES.MODAL_BACKDROP;
-	backdrop.addEventListener("click", (event) => {
-		if (event.target === backdrop) {
-			onClose();
-		}
-	});
-	return backdrop;
-};
-
-const createModalContainer = (): HTMLDivElement => {
-	const modal = document.createElement("div");
-	modal.className = UI.CLASSES.MODAL;
-	return modal;
-};
-
-const createSection = (labelText: string, field: HTMLElement, hintText?: string): HTMLDivElement => {
-	const section = document.createElement("div");
-	section.className = UI.CLASSES.MODAL_SECTION;
-
-	const label = document.createElement("label");
-	label.className = UI.CLASSES.MODAL_LABEL;
-	label.textContent = labelText;
-
-	section.appendChild(label);
-	section.appendChild(field);
-
-	if (hintText) {
-		const hint = document.createElement("div");
-		hint.className = UI.CLASSES.MODAL_HINT;
-		hint.textContent = hintText;
-		section.appendChild(hint);
-	}
-
-	return section;
-};
-
-const createFieldGroup = (labelText: string, field: HTMLElement, hintText?: string): HTMLDivElement => {
-	const group = document.createElement("div");
-	group.style.display = "flex";
-	group.style.flexDirection = "column";
-	group.style.gap = "6px";
-
-	const label = document.createElement("label");
-	label.className = UI.CLASSES.MODAL_LABEL;
-	label.textContent = labelText;
-
-	group.appendChild(label);
-	group.appendChild(field);
-
-	if (hintText) {
-		const hint = document.createElement("div");
-		hint.className = UI.CLASSES.MODAL_HINT;
-		hint.textContent = hintText;
-		group.appendChild(hint);
-	}
-
-	return group;
-};
-
-const createTwoColumnSection = (
-	left: { readonly label: string; readonly field: HTMLElement; readonly hint?: string },
-	right: { readonly label: string; readonly field: HTMLElement; readonly hint?: string }
-): HTMLDivElement => {
-	const section = document.createElement("div");
-	section.className = UI.CLASSES.MODAL_SECTION;
-	section.style.display = "flex";
-	section.style.flexDirection = "row";
-	section.style.gap = "12px";
-	section.style.alignItems = "flex-start";
-	section.style.flexWrap = "wrap";
-
-	const leftColumn = createFieldGroup(left.label, left.field, left.hint);
-	const rightColumn = createFieldGroup(right.label, right.field, right.hint);
-	leftColumn.style.flex = "1 1 0";
-	rightColumn.style.flex = "1 1 0";
-	leftColumn.style.minWidth = "0";
-	rightColumn.style.minWidth = "0";
-
-	section.appendChild(leftColumn);
-	section.appendChild(rightColumn);
-
-	return section;
-};
-
-const createSectionTitle = (labelText: string): HTMLDivElement => {
-	const title = document.createElement("div");
-	title.className = UI.CLASSES.MODAL_LABEL;
-	title.textContent = labelText;
-	return title;
-};
-
-const createReplyTypeSection = (labelText: string, field: HTMLElement): HTMLDivElement => {
-	const section = document.createElement("div");
-	section.className = UI.CLASSES.MODAL_SECTION;
-	section.appendChild(createSectionTitle(labelText));
-	section.appendChild(field);
-	return section;
-};
-
-const createTextArea = (value: string): HTMLTextAreaElement => {
-	const textarea = document.createElement("textarea");
-	textarea.className = UI.CLASSES.MODAL_TEXTAREA;
-	textarea.value = value;
-	return textarea;
-};
-
-const createSelect = (values: readonly string[], selectedValue: string): HTMLSelectElement => {
-	const select = document.createElement("select");
-	select.className = UI.CLASSES.MODAL_SELECT;
-	for (const value of values) {
-		const option = document.createElement("option");
-		option.value = value;
-		option.textContent = value || "(unknown)";
-		select.appendChild(option);
-	}
-	if (selectedValue) {
-		select.value = selectedValue;
-	}
-	return select;
-};
-
-const updateSelectOptions = (select: HTMLSelectElement, values: readonly string[], fallbackValue: string) => {
-	select.innerHTML = "";
-	for (const value of values) {
-		const option = document.createElement("option");
-		option.value = value;
-		option.textContent = value || "(unknown)";
-		select.appendChild(option);
-	}
-	select.value = values.includes(select.value) ? select.value : fallbackValue;
-};
-
 const applyPresetTemplate = (template: string, recipientName: string): string => template.replace(/\{name\}/g, recipientName || "there");
 
 const createPresetSelect = (presets: readonly MessageReplyPreset[]): HTMLSelectElement => {
@@ -213,34 +91,6 @@ const createPresetSelect = (presets: readonly MessageReplyPreset[]): HTMLSelectE
 	}
 	select.value = presets[0]?.id ?? "";
 	return select;
-};
-
-const createModeToggle = (name: string, value: MessageReplyMode, labelText: string, checked = false) => {
-	const input = document.createElement("input");
-	input.type = "radio";
-	input.name = name;
-	input.value = value;
-	input.checked = checked;
-	input.className = UI.CLASSES.MODAL_CHECKBOX;
-	input.id = `linkedin-assist__message-reply-${value}`;
-
-	const label = document.createElement("label");
-	label.className = UI.CLASSES.MODAL_CHECKBOX_TEXT;
-	label.htmlFor = input.id;
-
-	const text = document.createElement("span");
-	text.className = UI.CLASSES.MODAL_CHECKBOX_TEXT;
-	text.textContent = labelText;
-
-	label.appendChild(text);
-
-	const row = document.createElement("div");
-	row.className = UI.CLASSES.MODAL_CHECKBOX_ROW;
-	row.appendChild(input);
-	row.appendChild(label);
-	row.addEventListener("click", () => input.click());
-
-	return { input, row };
 };
 
 const getSelectedMode = (inputs: readonly HTMLInputElement[]): MessageReplyMode =>
@@ -265,7 +115,7 @@ const createModeControls = (): {
 	container.className = UI.CLASSES.MODAL_LIST;
 
 	const presetToggle = createModeToggle("message-reply-mode", "preset", "Use a preset reply", true);
-	const promptToggle = createModeToggle("message-reply-mode", "prompt", "Generate a prompt");
+	const promptToggle = createModeToggle("message-reply-mode", "prompt", "Generate a prompt", false);
 
 	container.appendChild(presetToggle.row);
 	container.appendChild(promptToggle.row);
@@ -332,27 +182,6 @@ const wirePresetUpdates = (
 	});
 	recipientSelect.addEventListener("change", refreshPresetPreview);
 	presetSelect.addEventListener("change", refreshPresetPreview);
-};
-
-const createModalButtons = (onCancel: () => void) => {
-	const buttonContainer = document.createElement("div");
-	buttonContainer.className = UI.CLASSES.MODAL_BUTTONS;
-
-	const cancelButton = document.createElement("button");
-	cancelButton.type = "button";
-	cancelButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_SECONDARY}`;
-	cancelButton.textContent = UI.TEXT.CANCEL_BUTTON;
-	cancelButton.addEventListener("click", onCancel);
-
-	const continueButton = document.createElement("button");
-	continueButton.type = "submit";
-	continueButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_PRIMARY}`;
-	continueButton.textContent = "Continue";
-
-	buttonContainer.appendChild(cancelButton);
-	buttonContainer.appendChild(continueButton);
-
-	return buttonContainer;
 };
 
 const handleSubmit = (

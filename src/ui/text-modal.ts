@@ -4,18 +4,17 @@
  */
 
 import { UI } from "../lib/constants";
+import { createModalBackdrop, createModalContainer } from "./components";
 
 export const createTextModal = (text: string): void => {
 	// Create backdrop
-	const backdrop = document.createElement("div");
-	backdrop.className = UI.CLASSES.MODAL_BACKDROP;
+	const backdrop = createModalBackdrop(() => backdrop.remove());
 	// Close modal function
 	const closeModal = () => {
 		backdrop.remove();
 	};
 	// Create modal container
-	const modal = document.createElement("div");
-	modal.className = UI.CLASSES.MODAL;
+	const modal = createModalContainer();
 
 	// Create modal content
 	const content = document.createElement("div");
@@ -47,13 +46,6 @@ export const createTextModal = (text: string): void => {
 	closeButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_SECONDARY}`;
 	closeButton.textContent = UI.TEXT.CLOSE_BUTTON;
 	closeButton.addEventListener("click", closeModal);
-
-	// Close on backdrop click
-	backdrop.addEventListener("click", (e) => {
-		if (e.target === backdrop) {
-			closeModal();
-		}
-	});
 
 	// Assemble modal
 	buttonContainer.appendChild(copyButton);

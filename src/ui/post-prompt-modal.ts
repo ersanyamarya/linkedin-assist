@@ -1,117 +1,11 @@
 import type { CommentPromptOptions, Emotion } from "../lib";
 import { ALLOWED_EMOTIONS, CommentPromptOptionsSchema, UI } from "../lib";
+import { createCheckboxList, createInput, createModalBackdrop, createModalContainer, createSection, createSelect, createTextArea } from "./components";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
 	readonly comments: readonly string[];
 	readonly onSubmit: (options: CommentPromptOptions) => void;
-};
-
-const createModalBackdrop = (onClose: () => void): HTMLDivElement => {
-	const backdrop = document.createElement("div");
-	backdrop.className = UI.CLASSES.MODAL_BACKDROP;
-	backdrop.addEventListener("click", (event) => {
-		if (event.target === backdrop) {
-			onClose();
-		}
-	});
-	return backdrop;
-};
-
-const createModalContainer = (): HTMLDivElement => {
-	const modal = document.createElement("div");
-	modal.className = UI.CLASSES.MODAL;
-	return modal;
-};
-
-const createSection = (labelText: string, field: HTMLElement, hintText?: string): HTMLDivElement => {
-	const section = document.createElement("div");
-	section.className = UI.CLASSES.MODAL_SECTION;
-
-	const label = document.createElement("label");
-	label.className = UI.CLASSES.MODAL_LABEL;
-	label.textContent = labelText;
-
-	section.appendChild(label);
-	section.appendChild(field);
-
-	if (hintText) {
-		const hint = document.createElement("div");
-		hint.className = UI.CLASSES.MODAL_HINT;
-		hint.textContent = hintText;
-		section.appendChild(hint);
-	}
-
-	return section;
-};
-
-const createTextArea = (value: string, readonly = false): HTMLTextAreaElement => {
-	const textarea = document.createElement("textarea");
-	textarea.className = UI.CLASSES.MODAL_TEXTAREA;
-	textarea.value = value;
-	textarea.readOnly = readonly;
-	return textarea;
-};
-
-const createInput = (type: string, placeholder: string, value = ""): HTMLInputElement => {
-	const input = document.createElement("input");
-	input.className = UI.CLASSES.MODAL_INPUT;
-	input.type = type;
-	input.placeholder = placeholder;
-	input.value = value;
-	return input;
-};
-
-const createSelect = (values: readonly Emotion[]): HTMLSelectElement => {
-	const select = document.createElement("select");
-	select.className = UI.CLASSES.MODAL_SELECT;
-	for (const value of values) {
-		const option = document.createElement("option");
-		option.value = value;
-		option.textContent = value;
-		select.appendChild(option);
-	}
-	return select;
-};
-
-const createCheckboxList = (
-	comments: readonly string[]
-): {
-	readonly container: HTMLDivElement;
-	readonly rows: ReadonlyArray<{ checkbox: HTMLInputElement; value: string }>;
-} => {
-	const container = document.createElement("div");
-	container.className = UI.CLASSES.MODAL_LIST;
-
-	if (comments.length === 0) {
-		const empty = document.createElement("div");
-		empty.className = UI.CLASSES.MODAL_HINT;
-		empty.textContent = "(none)";
-		container.appendChild(empty);
-		return { container, rows: [] };
-	}
-
-	const rows = comments.map((comment) => {
-		const row = document.createElement("label");
-		row.className = UI.CLASSES.MODAL_CHECKBOX_ROW;
-
-		const checkbox = document.createElement("input");
-		checkbox.type = "checkbox";
-		checkbox.checked = true;
-		checkbox.className = UI.CLASSES.MODAL_CHECKBOX;
-
-		const text = document.createElement("span");
-		text.className = UI.CLASSES.MODAL_CHECKBOX_TEXT;
-		text.textContent = comment;
-
-		row.appendChild(checkbox);
-		row.appendChild(text);
-		container.appendChild(row);
-
-		return { checkbox, value: comment };
-	});
-
-	return { container, rows };
 };
 
 const parseOptionalNumber = (value: string): number | undefined => {
