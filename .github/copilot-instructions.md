@@ -1,175 +1,28 @@
 # LinkedIn Assist — Copilot instructions
 
-## Architecture & flow
+## Big picture (MV3 content script)
 
-**Extension type**: Chrome MV3 content-script only (no background script, no popup).
+- Chrome MV3 **content-script only** (no background/popup). `public/manifest.json` injects `dist/content/index.js` on `https://www.linkedin.com/*`.
+- `src/content/index.ts` registers a single `MutationObserver` on `document.body` and calls `loadedCommentScript()`.
+- `src/content/comment.ts` finds new editors (`DOM.SELECTORS.EDITABLE_COMMENT_BOX`), marks them with `data-mutated`, injects a lightbulb button, and on click:
+  - Extracts either **post + comments** or **messaging thread** (route `/messaging/thread/` or presence of `.msg-thread`).
+  - Validates payloads via Zod (`src/lib/schemas.ts`), builds a plain-text prompt (`src/lib/prompt-builders.ts`), and shows it in a modal (`src/ui/text-modal.ts`).
 
-**Entry → DOM observation → DOM extraction → UI injection → Modal:**
+## Project-specific conventions
 
-1. `src/content/index.ts`: Single `MutationObserver` watches `document.body` for new comment editors
-2. Calls `loadedCommentScript()` from `src/content/comment.ts` on every mutation
-3. Finds unprocessed editors (marked via `data-mutated` attribute), highlights them with random light color
-4. Attaches suggestion button to the editor row; clicking triggers DOM extraction and `createTextModal()`
-5. `src/shared/text-modal.ts` renders modal with copy + close buttons; backdrop click closes
+- **Selectors live in one place**: extend `src/lib/constants.ts` (`DOM.SELECTORS`) and update helpers; avoid ad-hoc selectors scattered in logic.
+- **Idempotent DOM wiring**: always gate on `DOM.ATTR.DATA_MUTATED` to avoid duplicate buttons on repeated mutations.
+- **Messaging sender extraction pitfall**: don’t use broad `a[href*='/in/']` (it matches `@mentions` in message paragraphs). Prefer `.msg-s-message-group__meta a[href*='/in/']` and keep fallbacks mention-safe (see `extractMessageSenderNameRaw()` in `src/content/comment.ts`).
+- **UI styling**: extension classes use `linkedin-assist__*` and are styled in `public/styles.css`; keep inline styles minimal.
 
-**DOM structure**: LinkedIn uses both feed list (`[data-view-name="feed-full-update"]`) and single post page layouts. Helpers (`findFeedContainer`, `findCommentaryTextElement`, `extractPostComments`) try multiple selectors to work in both contexts.
+## Developer workflows
 
-## Conventions and patterns
+- `bun install`
+- `bun run dev` (watch build + copy assets to `dist/`)
+- `bun run build` (clean + compile + copy to `dist/`)
+- Load unpacked: `chrome://extensions` → Developer mode → **Load unpacked** → select `dist/`
 
-- **DOM selectors**: Centralized in `src/shared/constants.ts` (`DOM.SELECTORS`); reuse in helpers rather than inline queries.
-  - Example: `findFeedContainer()` tries feed list selector → listitem role → single post fallback.
-  - When adding new selectors, extend `DOM.SELECTORS` and update relevant helpers.
-- **UI attachment**: Append to editor row, use `linkedin-assist__*` class prefix, style in `public/styles.css` (not inline, except `randomLightHexColor()` for highlights).
-- **Idempotent DOM changes**: Always check `data-mutated` attribute before processing to avoid duplicate wiring on repeat mutations.
-- **Shared exports**: All constants, UI strings, SVG icons live in `src/shared/constants.ts` and re-export via `src/shared/index.ts`.
+## Formatting/linting
 
-## Workflows
-
-- **Setup**: `bun install`
-- **Dev** (watch + auto-rebuild): `bun run dev` → watches `src/**` + `public/**`, outputs to `dist/`, mirrors assets
-- **One-time build**: `bun run build` (clean + copy + compile)
-- **Clean**: `bun run clean`
-- **Load extension**: `chrome://extensions/` → Developer mode → Load unpacked → select `dist/` folder
-
-## Key files & their roles
-
-| File                       | Purpose                                                                 |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `src/content/index.ts`     | Registers mutation observer; entry point                                |
-| `src/content/comment.ts`   | Finds + highlights editors, attaches button, extracts post/comment text |
-| `src/shared/constants.ts`  | DOM selectors, UI classes, SVG icons, theme constants                   |
-| `src/shared/text-modal.ts` | Modal component with copy & close buttons                               |
-| `public/manifest.json`     | Content script registration; runs on `https://www.linkedin.com/*`       |
-| `public/styles.css`        | Modal + button styling                                                  |
-
-## Integration points & constraints
-
-- **No external APIs** (yet); pure DOM extraction.
-- **No background script or popup**; content script does all work.
-- **Bun + TypeScript 5** only; strict build process.
-- **Modal output**: Plain text (post + comments concatenated) to `navigator.clipboard`.
-
-
-# Ultracite Code Standards
-
-This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
-
-## Quick Reference
-
-- **Format code**: `bun x ultracite fix`
-- **Check for issues**: `bun x ultracite check`
-- **Diagnose setup**: `bun x ultracite doctor`
-
-Biome (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
-
----
-
-## Core Principles
-
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
-
-### Type Safety & Explicitness
-
-- Use explicit types for function parameters and return values when they enhance clarity
-- Prefer `unknown` over `any` when the type is genuinely unknown
-- Use const assertions (`as const`) for immutable values and literal types
-- Leverage TypeScript's type narrowing instead of type assertions
-- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
-
-### Modern JavaScript/TypeScript
-
-- Use arrow functions for callbacks and short functions
-- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
-- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
-- Prefer template literals over string concatenation
-- Use destructuring for object and array assignments
-- Use `const` by default, `let` only when reassignment is needed, never `var`
-
-### Async & Promises
-
-- Always `await` promises in async functions - don't forget to use the return value
-- Use `async/await` syntax instead of promise chains for better readability
-- Handle errors appropriately in async code with try-catch blocks
-- Don't use async functions as Promise executors
-
-### React & JSX
-
-- Use function components over class components
-- Call hooks at the top level only, never conditionally
-- Specify all dependencies in hook dependency arrays correctly
-- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
-- Nest children between opening and closing tags instead of passing as props
-- Don't define components inside other components
-- Use semantic HTML and ARIA attributes for accessibility:
-  - Provide meaningful alt text for images
-  - Use proper heading hierarchy
-  - Add labels for form inputs
-  - Include keyboard event handlers alongside mouse events
-  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
-
-### Error Handling & Debugging
-
-- Remove `console.log`, `debugger`, and `alert` statements from production code
-- Throw `Error` objects with descriptive messages, not strings or other values
-- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
-- Prefer early returns over nested conditionals for error cases
-
-### Code Organization
-
-- Keep functions focused and under reasonable cognitive complexity limits
-- Extract complex conditions into well-named boolean variables
-- Use early returns to reduce nesting
-- Prefer simple conditionals over nested ternary operators
-- Group related code together and separate concerns
-
-### Security
-
-- Add `rel="noopener"` when using `target="_blank"` on links
-- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
-- Don't use `eval()` or assign directly to `document.cookie`
-- Validate and sanitize user input
-
-### Performance
-
-- Avoid spread syntax in accumulators within loops
-- Use top-level regex literals instead of creating them in loops
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
-
-### Framework-Specific Guidance
-
-**Next.js:**
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
-
-**React 19+:**
-- Use ref as a prop instead of `React.forwardRef`
-
-**Solid/Svelte/Vue/Qwik:**
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
-
----
-
-## Testing
-
-- Write assertions inside `it()` or `test()` blocks
-- Avoid done callbacks in async tests - use async/await instead
-- Don't use `.only` or `.skip` in committed code
-- Keep test suites reasonably flat - avoid excessive `describe` nesting
-
-## When Biome Can't Help
-
-Biome's linter will catch most issues automatically. Focus your attention on:
-
-1. **Business logic correctness** - Biome can't validate your algorithms
-2. **Meaningful naming** - Use descriptive names for functions, variables, and types
-3. **Architecture decisions** - Component structure, data flow, and API design
-4. **Edge cases** - Handle boundary conditions and error states
-5. **User experience** - Accessibility, performance, and usability considerations
-6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
-
----
-
-Most formatting and common issues are automatically fixed by Biome. Run `bun x ultracite fix` before committing to ensure compliance.
+- Use Ultracite/Biome: `bun run format`.
+- Preserve existing formatting (Biome prefers tabs in this repo); avoid drive-by reformatting.
