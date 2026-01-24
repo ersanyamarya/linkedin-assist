@@ -3,8 +3,8 @@ export {
 	createCheckboxList,
 	createFieldGroup,
 	createReplyTypeSection,
+	createRowSection,
 	createSectionTitle,
-	createTwoColumnSection,
 	updateSelectOptions,
 } from "./input-elements";
 export { createInput, createModalBackdrop, createModalContainer, createSection, createSelect, createTextArea } from "./modal-elements";

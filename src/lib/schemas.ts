@@ -53,3 +53,34 @@ export const CommentPromptOptionsSchema = z
 	.strict();
 
 export type CommentPromptOptions = z.infer<typeof CommentPromptOptionsSchema>;
+
+export const ALLOWED_TONES = ["friendly", "professional", "casual", "direct", "warm"] as const;
+export const TonesSchema = z.enum(ALLOWED_TONES);
+export type Tone = z.infer<typeof TonesSchema>;
+
+export const ALLOWED_LENGTHS = ["short", "medium", "long"] as const;
+export const LengthsSchema = z.enum(ALLOWED_LENGTHS);
+export type Length = z.infer<typeof LengthsSchema>;
+
+export const ALLOWED_INTENTS = ["reply", "follow-up", "close", "qualify-lead"] as const;
+export const IntentsSchema = z.enum(ALLOWED_INTENTS);
+export type Intent = z.infer<typeof IntentsSchema>;
+
+export const ALLOWED_FORMALITIES = ["low", "medium", "high"] as const;
+export const FormalitiesSchema = z.enum(ALLOWED_FORMALITIES);
+export type Formality = z.infer<typeof FormalitiesSchema>;
+
+export const MessagePromptOptionsSchema = z
+	.object({
+		currentUserName: z.string().optional(),
+		recipientName: z.string().optional(),
+		tone: TonesSchema.optional(),
+		length: LengthsSchema.optional(),
+		intent: IntentsSchema.optional(),
+		formality: FormalitiesSchema.optional(),
+		includeCTA: z.boolean().optional(),
+		extraInstructions: z.string().optional(),
+	})
+	.strict();
+
+export type MessagePromptOptions = z.infer<typeof MessagePromptOptionsSchema>;

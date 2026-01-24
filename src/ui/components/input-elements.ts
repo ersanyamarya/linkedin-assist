@@ -27,12 +27,9 @@ export const createFieldGroup = (labelText: string, field: HTMLElement, hintText
 };
 
 /**
- * Creates a two-column section with left and right field groups.
+ * Creates a row section with any number of field groups.
  */
-export const createTwoColumnSection = (
-	left: { readonly label: string; readonly field: HTMLElement; readonly hint?: string },
-	right: { readonly label: string; readonly field: HTMLElement; readonly hint?: string }
-): HTMLDivElement => {
+export const createRowSection = (columns: ReadonlyArray<{ readonly label: string; readonly field: HTMLElement; readonly hint?: string }>): HTMLDivElement => {
 	const section = document.createElement("div");
 	section.className = UI.CLASSES.MODAL_SECTION;
 	section.style.display = "flex";
@@ -41,15 +38,12 @@ export const createTwoColumnSection = (
 	section.style.alignItems = "flex-start";
 	section.style.flexWrap = "wrap";
 
-	const leftColumn = createFieldGroup(left.label, left.field, left.hint);
-	const rightColumn = createFieldGroup(right.label, right.field, right.hint);
-	leftColumn.style.flex = "1 1 0";
-	rightColumn.style.flex = "1 1 0";
-	leftColumn.style.minWidth = "0";
-	rightColumn.style.minWidth = "0";
-
-	section.appendChild(leftColumn);
-	section.appendChild(rightColumn);
+	for (const columnConfig of columns) {
+		const column = createFieldGroup(columnConfig.label, columnConfig.field, columnConfig.hint);
+		column.style.flex = "1 1 0";
+		column.style.minWidth = "0";
+		section.appendChild(column);
+	}
 
 	return section;
 };

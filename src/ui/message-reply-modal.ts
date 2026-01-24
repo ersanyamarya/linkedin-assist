@@ -1,5 +1,5 @@
-import type { Messages } from "../lib";
-import { UI } from "../lib";
+import type { Formality, Intent, Length, Messages, Tone } from "../lib";
+import { ALLOWED_FORMALITIES, ALLOWED_INTENTS, ALLOWED_LENGTHS, ALLOWED_TONES, UI } from "../lib";
 import type { MessagePromptOptions } from "../prompt";
 import {
 	createModalBackdrop,
@@ -7,10 +7,10 @@ import {
 	createModalContainer,
 	createModeToggle,
 	createReplyTypeSection,
+	createRowSection,
 	createSection,
 	createSelect,
 	createTextArea,
-	createTwoColumnSection,
 	updateSelectOptions,
 } from "./components";
 
@@ -96,9 +96,23 @@ const createPresetSelect = (presets: readonly MessageReplyPreset[]): HTMLSelectE
 const getSelectedMode = (inputs: readonly HTMLInputElement[]): MessageReplyMode =>
 	(inputs.find((input) => input.checked)?.value as MessageReplyMode | undefined) ?? "preset";
 
-const buildPromptOptions = (yourName: string, recipientName: string, extraInstructions: string): MessagePromptOptions => ({
+const buildPromptOptions = (
+	yourName: string,
+	recipientName: string,
+	tone: string | undefined,
+	length: string | undefined,
+	intent: string | undefined,
+	formality: string | undefined,
+	includeCTA: boolean,
+	extraInstructions: string
+): MessagePromptOptions => ({
 	currentUserName: normalizeWhitespace(yourName) || undefined,
 	recipientName: normalizeWhitespace(recipientName) || undefined,
+	tone: (tone as Tone) || undefined,
+	length: (length as Length) || undefined,
+	intent: (intent as Intent) || undefined,
+	formality: (formality as Formality) || undefined,
+	includeCTA: includeCTA || undefined,
 	extraInstructions: normalizeWhitespace(extraInstructions) || undefined,
 });
 
@@ -132,10 +146,27 @@ const createPresetControls = (): {
 	return { select, preview };
 };
 
-const createPromptControls = (): HTMLTextAreaElement => {
-	const textarea = createTextArea("");
-	textarea.placeholder = "Optional extra instructions";
-	return textarea;
+const createPromptControls = (): {
+	readonly toneSelect: HTMLSelectElement;
+	readonly lengthSelect: HTMLSelectElement;
+	readonly intentSelect: HTMLSelectElement;
+	readonly formalitySelect: HTMLSelectElement;
+	readonly ctaCheckbox: HTMLInputElement;
+	readonly extraInstructions: HTMLTextAreaElement;
+} => {
+	const toneSelect = createSelect(ALLOWED_TONES as unknown as string[], "");
+	const lengthSelect = createSelect(ALLOWED_LENGTHS as unknown as string[], "");
+	const intentSelect = createSelect(ALLOWED_INTENTS as unknown as string[], "");
+	const formalitySelect = createSelect(ALLOWED_FORMALITIES as unknown as string[], "");
+
+	const ctaCheckbox = document.createElement("input");
+	ctaCheckbox.type = "checkbox";
+	ctaCheckbox.className = UI.CLASSES.MODAL_CHECKBOX;
+
+	const extraInstructions = createTextArea("");
+	extraInstructions.placeholder = "Optional extra instructions";
+
+	return { toneSelect, lengthSelect, intentSelect, formalitySelect, ctaCheckbox, extraInstructions };
 };
 
 const buildModalState = (data: Messages) => {
@@ -189,7 +220,17 @@ const handleSubmit = (
 	data: Messages,
 	inputs: readonly HTMLInputElement[],
 	selects: { readonly yourNameSelect: HTMLSelectElement; readonly recipientSelect: HTMLSelectElement },
-	controls: { readonly presetPreview: HTMLTextAreaElement; readonly promptInstructions: HTMLTextAreaElement },
+	controls: {
+		readonly presetPreview: HTMLTextAreaElement;
+		readonly promptControls: {
+			readonly toneSelect: HTMLSelectElement;
+			readonly lengthSelect: HTMLSelectElement;
+			readonly intentSelect: HTMLSelectElement;
+			readonly formalitySelect: HTMLSelectElement;
+			readonly ctaCheckbox: HTMLInputElement;
+			readonly extraInstructions: HTMLTextAreaElement;
+		};
+	},
 	context: { readonly senderName: string },
 	buildPrompt: (data: Messages, options: MessagePromptOptions) => string,
 	onSubmit: (result: MessageReplyModalResult) => void,
@@ -208,7 +249,16 @@ const handleSubmit = (
 		return;
 	}
 
-	const options = buildPromptOptions(yourName, recipientName, controls.promptInstructions.value);
+	const options = buildPromptOptions(
+		yourName,
+		recipientName,
+		controls.promptControls.toneSelect.value,
+		controls.promptControls.lengthSelect.value,
+		controls.promptControls.intentSelect.value,
+		controls.promptControls.formalitySelect.value,
+		controls.promptControls.ctaCheckbox.checked,
+		controls.promptControls.extraInstructions.value
+	);
 	const text = buildPrompt(data, options);
 	onSubmit({ mode, text });
 	onClose();
@@ -231,7 +281,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	const selects = createReplySelects(state.participants, state.defaultYourName, state.defaultRecipientName, state.senderName);
 	const modes = createModeControls();
 	const presets = createPresetControls();
-	const promptInstructions = createPromptControls();
+	const promptControls = createPromptControls();
 
 	updatePresetPreview(presets.select, selects.recipientSelect.value, presets.preview);
 	wirePresetUpdates(state.participants, selects.yourNameSelect, selects.recipientSelect, presets.select, presets.preview);
@@ -240,7 +290,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	form.className = UI.CLASSES.MODAL_FORM;
 
 	form.appendChild(
-		createTwoColumnSection(
+		createRowSection([
 			{
 				label: "You are",
 				field: selects.yourNameSelect,
@@ -250,23 +300,63 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 				label: "Address",
 				field: selects.recipientSelect,
 				hint: "Who is the reply for?",
-			}
-		)
+			},
+		])
 	);
 	const replyTypeSection = createReplyTypeSection("Reply type", modes.container);
 	const presetSection = createSection("Preset", presets.select);
 	const presetPreviewSection = createSection("Preset preview", presets.preview, "Edit if you want to tweak the message");
-	const promptSection = createSection("Prompt instructions", promptInstructions, "Only used when generating a prompt");
+	const promptOptionsSection = createRowSection([
+		{
+			label: "Tone",
+			field: promptControls.toneSelect,
+			hint: "How should the tone feel?",
+		},
+		{
+			label: "Length",
+			field: promptControls.lengthSelect,
+			hint: "How long should the reply be?",
+		},
+		{
+			label: "Intent",
+			field: promptControls.intentSelect,
+			hint: "What's the goal of this reply?",
+		},
+		{
+			label: "Formality",
+			field: promptControls.formalitySelect,
+			hint: "How formal should it be?",
+		},
+	]);
+	const promptCTAContainer = document.createElement("div");
+	promptCTAContainer.style.display = "flex";
+	promptCTAContainer.style.alignItems = "center";
+	promptCTAContainer.style.gap = "8px";
+	const promptCTALabel = document.createElement("label");
+	promptCTALabel.style.display = "flex";
+	promptCTALabel.style.alignItems = "center";
+	promptCTALabel.style.gap = "8px";
+	promptCTALabel.style.cursor = "pointer";
+	promptCTALabel.appendChild(promptControls.ctaCheckbox);
+	const ctaText = document.createElement("span");
+	ctaText.textContent = "Include a call-to-action";
+	promptCTALabel.appendChild(ctaText);
+	const promptCTASection = createSection("Call-to-action", promptCTALabel, "Optional: Add a clear next step or question");
+	const promptInstructionsSection = createSection("Extra instructions", promptControls.extraInstructions, "Optional: Any additional instructions for the LLM");
 
 	const setModeVisibility = () => {
 		const mode = getSelectedMode(modes.inputs);
 		const isPreset = mode === "preset";
 		presetSection.style.display = isPreset ? "" : "none";
 		presetPreviewSection.style.display = isPreset ? "" : "none";
-		promptSection.style.display = isPreset ? "none" : "";
+		promptOptionsSection.style.display = isPreset ? "none" : "";
+		promptCTASection.style.display = isPreset ? "none" : "";
+		promptInstructionsSection.style.display = isPreset ? "none" : "";
 		presetSection.setAttribute("aria-hidden", String(!isPreset));
 		presetPreviewSection.setAttribute("aria-hidden", String(!isPreset));
-		promptSection.setAttribute("aria-hidden", String(isPreset));
+		promptOptionsSection.setAttribute("aria-hidden", String(isPreset));
+		promptCTASection.setAttribute("aria-hidden", String(isPreset));
+		promptInstructionsSection.setAttribute("aria-hidden", String(isPreset));
 	};
 
 	for (const input of modes.inputs) {
@@ -277,7 +367,9 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	form.appendChild(replyTypeSection);
 	form.appendChild(presetSection);
 	form.appendChild(presetPreviewSection);
-	form.appendChild(promptSection);
+	form.appendChild(promptOptionsSection);
+	form.appendChild(promptCTASection);
+	form.appendChild(promptInstructionsSection);
 	form.appendChild(createModalButtons(() => backdrop.remove()));
 
 	form.addEventListener("submit", (event) =>
@@ -286,7 +378,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			data,
 			modes.inputs,
 			selects,
-			{ presetPreview: presets.preview, promptInstructions },
+			{ presetPreview: presets.preview, promptControls },
 			{ senderName: state.senderName },
 			buildPrompt,
 			onSubmit,
