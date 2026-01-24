@@ -70,7 +70,7 @@ const collectParticipants = (data: Messages): readonly string[] => {
 };
 
 const pickDefaultYourName = (participants: readonly string[], senderName: string): string =>
-	participants.find((name) => normalizeWhitespace(name) !== normalizeWhitespace(senderName)) ?? participants[0] ?? "";
+	participants.find((name) => normalizeWhitespace(name) !== normalizeWhitespace(senderName)) ?? "";
 
 const pickDefaultRecipientName = (participants: readonly string[], yourName: string, senderName: string): string => {
 	const normalizedSender = normalizeWhitespace(senderName);
@@ -143,19 +143,19 @@ const buildModalState = (data: Messages) => {
 	const senderName = normalizeWhitespace(data.senderName);
 	const defaultYourName = pickDefaultYourName(participants, senderName);
 	const defaultRecipientName = pickDefaultRecipientName(participants, defaultYourName, senderName);
-
 	return { participants, senderName, defaultYourName, defaultRecipientName };
 };
 
 const createReplySelects = (participants: readonly string[], defaultYourName: string, defaultRecipientName: string, senderName: string) => {
 	const isSingleParticipant = participants.length === 1;
 	const onlyName = participants[0] ?? "";
-	const yourNameSelect = createSelect(participants, isSingleParticipant ? onlyName : defaultYourName);
+	const yourNameSelect = createSelect(participants, isSingleParticipant ? "" : defaultYourName);
 	const recipientOptions = isSingleParticipant ? [onlyName] : participants.filter((name) => name !== defaultYourName);
 	const recipientSelect = createSelect(recipientOptions, isSingleParticipant ? onlyName : defaultRecipientName || senderName);
 
 	if (isSingleParticipant) {
 		yourNameSelect.disabled = true;
+		yourNameSelect.value = "";
 		recipientSelect.disabled = true;
 	}
 
