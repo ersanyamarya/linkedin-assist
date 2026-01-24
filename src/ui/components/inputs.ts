@@ -36,14 +36,14 @@ export const updateOptions = (selectEl: HTMLSelectElement, options: readonly str
 /** Single checkbox with label */
 export const checkbox = (label: string, checked = false, name?: string): { el: HTMLLabelElement; input: HTMLInputElement } => {
 	const input = el("input", { type: "checkbox", checked, name, className: "la-checkbox" });
-	return { el: el("label", { className: "la-checkbox-row" }, [input, el("span", {}, [label])]), input };
+	return { el: el("label", { className: "la-checkbox-row" }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
 };
 
 /** Single radio with label */
 export const radio = (name: string, value: string, label: string, checked = false): { el: HTMLLabelElement; input: HTMLInputElement } => {
 	const id = `la-${name}-${value}`;
 	const input = el("input", { type: "radio", name, value, checked, id, className: "la-checkbox" });
-	return { el: el("label", { className: "la-checkbox-row", htmlFor: id }, [input, el("span", {}, [label])]), input };
+	return { el: el("label", { className: "la-checkbox-row", htmlFor: id }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
 };
 
 /** Checkbox list inside fieldset */

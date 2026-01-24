@@ -177,7 +177,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		}
 	);
 
-	const footer = modalFooter([modalButtons("Cancel", "Continue", () => closeModal())]);
+	const footer = modalFooter([modalButtons("Cancel", "Continue", () => closeModal(), form.id)]);
 	const { close } = showModal("Reply to LinkedIn message", [form], footer);
 	closeModal = close;
 };

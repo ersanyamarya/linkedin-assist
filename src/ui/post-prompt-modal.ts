@@ -61,7 +61,7 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 		}
 	);
 
-	const footer = modalFooter([modalButtons("Cancel", "Generate prompt", () => closeModal())]);
+	const footer = modalFooter([modalButtons("Cancel", "Generate prompt", () => closeModal(), form.id)]);
 	const { close } = showModal("Draft a LinkedIn comment", [form], footer);
 	closeModal = close;
 };
