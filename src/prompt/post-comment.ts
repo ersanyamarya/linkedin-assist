@@ -4,7 +4,7 @@ import type { CommentPromptOptions } from "../lib";
  * Builds a prompt for an LLM that sets a clear role,
  * provides context, and avoids typical AI signals.
  */
-export function buildLinkedInCommentPrompt(options: CommentPromptOptions): string {
+export const buildLinkedInCommentPrompt = (options: CommentPromptOptions): string => {
 	const { postText, selectedComments, yourThoughts, emotion, maxLengthWords, extraInstructions } = options;
 
 	// 1. Role and purpose — tell the model who it should be
@@ -44,4 +44,4 @@ export function buildLinkedInCommentPrompt(options: CommentPromptOptions): strin
 	];
 
 	return promptParts.filter((p) => p && p.trim().length > 0).join("\n\n");
-}
+};

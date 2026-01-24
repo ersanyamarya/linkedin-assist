@@ -1,5 +1,7 @@
-import { buildMessagesPrompt, buildPostCommentsPrompt, DOM, MessagesSchema, PostCommentsSchema, UI } from "../lib";
-import { createTextModal } from "../ui";
+import type { CommentPromptOptions } from "../lib";
+import { buildMessagesPrompt, DOM, MessagesSchema, PostCommentsSchema, UI } from "../lib";
+import { buildLinkedInCommentPrompt } from "../prompt";
+import { createPostCommentPromptModal, createTextModal } from "../ui";
 
 // const randomLightHexColor = (): string => {
 // 	let color = "#";
@@ -307,7 +309,13 @@ const handleSuggestionClick = (commentBox: Element) => {
 			postText,
 			comments,
 		});
-		createTextModal(buildPostCommentsPrompt(parsed.data));
+		createPostCommentPromptModal({
+			postText: parsed.data.postText,
+			comments: parsed.data.comments,
+			onSubmit: (options: CommentPromptOptions) => {
+				createTextModal(buildLinkedInCommentPrompt(options));
+			},
+		});
 	}
 };
 
