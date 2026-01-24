@@ -1,3 +1,28 @@
+/* ==========================================================================
+   LinkedIn Assist — Component Styles
+   Prefix: la- (linkedin-assist)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Core Variables
+   -------------------------------------------------------------------------- */
+:root {
+	--la-primary: #0a66c2;
+	--la-primary-hover: #084fa3;
+	--la-text: #111;
+	--la-text-muted: #666;
+	--la-bg: #fff;
+	--la-bg-muted: #fafafa;
+	--la-border: #d0d0d0;
+	--la-border-light: #e2e2e2;
+	--la-radius: 6px;
+	--la-radius-lg: 8px;
+	--la-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Comment Row (suggestion button injection)
+   -------------------------------------------------------------------------- */
 .linkedin-assist__comment-row {
 	display: flex;
 	align-items: center;
@@ -5,7 +30,7 @@
 }
 
 .linkedin-assist__comment-editor {
-	flex-grow: 1;
+	flex: 1;
 }
 
 .linkedin-assist__suggestion-button {
@@ -13,7 +38,7 @@
 	padding: 1px;
 	margin-left: 8px;
 	cursor: pointer;
-	background-color: transparent;
+	background: transparent;
 	border: none;
 }
 
@@ -23,161 +48,206 @@
 	border-radius: 4px;
 }
 
-.linkedin-assist__modal-backdrop {
+/* --------------------------------------------------------------------------
+   Modal — Backdrop & Container
+   -------------------------------------------------------------------------- */
+.la-modal {
 	position: fixed;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
+	inset: 0;
 	z-index: 10000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.5);
 }
 
-.linkedin-assist__modal {
+.la-modal__box {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 	width: min(92vw, 680px);
-	max-width: 680px;
 	max-height: 80vh;
 	padding: 24px;
 	overflow-y: auto;
-	background-color: white;
-	border-radius: 8px;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+	background: var(--la-bg);
+	border-radius: var(--la-radius-lg);
+	box-shadow: var(--la-shadow);
 }
 
-.linkedin-assist__modal-title {
+.la-modal__title {
+	margin: 0;
 	font-size: 18px;
 	font-weight: 600;
-	color: #111;
+	color: var(--la-text);
 }
 
-.linkedin-assist__modal-form {
+.la-modal__form {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 }
 
-.linkedin-assist__modal-section {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.linkedin-assist__modal-label {
-	font-size: 13px;
-	font-weight: 600;
-	color: #222;
-}
-
-.linkedin-assist__modal-hint {
-	font-size: 12px;
-	color: #666;
-}
-
-.linkedin-assist__modal-input,
-.linkedin-assist__modal-textarea,
-.linkedin-assist__modal-select {
-	width: 100%;
-	padding: 8px 10px;
-	font-size: 13px;
-	border: 1px solid #d0d0d0;
-	border-radius: 6px;
-}
-
-.linkedin-assist__modal-textarea {
-	min-height: 90px;
-	resize: vertical;
-}
-
-.linkedin-assist__modal-list {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	max-height: 160px;
-	padding: 8px;
-	overflow-y: auto;
-	background-color: #fafafa;
-	border: 1px solid #e2e2e2;
-	border-radius: 6px;
-}
-
-.linkedin-assist__modal-checkbox-row {
-	display: flex;
-	gap: 8px;
-	align-items: flex-start;
-	font-size: 13px;
-	color: #333;
-}
-
-.linkedin-assist__modal-checkbox {
-	margin-top: 3px;
-}
-
-.linkedin-assist__modal-checkbox-text {
-	line-height: 1.4;
-}
-
-.linkedin-assist__modal-content {
-	font-size: 14px;
-	line-height: 1.5;
-	color: #333;
-	word-wrap: break-word;
-	white-space: pre-wrap;
-}
-
-.linkedin-assist__modal-buttons {
+.la-modal__actions {
 	display: flex;
 	gap: 8px;
 	justify-content: flex-end;
 }
 
-.linkedin-assist__modal-button {
+/* --------------------------------------------------------------------------
+   Form Fields — Generic
+   -------------------------------------------------------------------------- */
+.la-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.la-label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #222;
+}
+
+.la-hint {
+	font-size: 12px;
+	color: var(--la-text-muted);
+}
+
+.la-input,
+.la-textarea,
+.la-select {
+	width: 100%;
+	padding: 8px 10px;
+	font-size: 13px;
+	border: 1px solid var(--la-border);
+	border-radius: var(--la-radius);
+}
+
+.la-textarea {
+	min-height: 90px;
+	resize: vertical;
+}
+
+/* --------------------------------------------------------------------------
+   Fieldset & Legend (Checkbox/Radio Lists)
+   -------------------------------------------------------------------------- */
+.la-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-height: 160px;
+	padding: 8px;
+	margin: 0;
+	overflow-y: auto;
+	background: var(--la-bg-muted);
+	border: 1px solid var(--la-border-light);
+	border-radius: var(--la-radius);
+}
+
+.la-list > legend {
+	padding: 0 4px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Checkbox & Radio Rows
+   -------------------------------------------------------------------------- */
+.la-checkbox-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	font-size: 13px;
+	color: #333;
+	cursor: pointer;
+}
+
+.la-checkbox {
+	display: inline-block !important;
+	visibility: visible !important;
+	width: 16px !important;
+	height: 16px !important;
+	margin: 0 !important;
+	vertical-align: middle;
+	-webkit-appearance: checkbox !important;
+	appearance: auto !important;
+	accent-color: var(--la-primary);
+	background: transparent !important;
+	border: none !important;
+	opacity: 1 !important;
+}
+
+.la-checkbox[type="radio"] {
+	-webkit-appearance: radio !important;
+}
+
+/* --------------------------------------------------------------------------
+   Field Row (Inline Fields)
+   -------------------------------------------------------------------------- */
+.la-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.la-row > .la-field {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+.la-btn {
 	padding: 8px 16px;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
 	border: none;
 	border-radius: 4px;
-	transition: all 0.2s ease;
+	transition: background 0.2s;
 }
 
-.linkedin-assist__modal-button--primary {
-	color: white;
-	background-color: #0a66c2;
+.la-btn--primary {
+	color: #fff;
+	background: var(--la-primary);
 }
 
-.linkedin-assist__modal-button--primary:hover {
-	background-color: #084fa3;
+.la-btn--primary:hover {
+	background: var(--la-primary-hover);
 }
 
-.linkedin-assist__modal-button--secondary {
+.la-btn--secondary {
 	color: #333;
-	background-color: #e8e8e8;
+	background: #e8e8e8;
 }
 
-.linkedin-assist__modal-button--secondary:hover {
-	background-color: #d0d0d0;
+.la-btn--secondary:hover {
+	background: #d0d0d0;
 }
 
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
-	.linkedin-assist__modal {
+	.la-modal__box {
 		width: 94vw;
 		max-height: 85vh;
 		padding: 18px;
 		border-radius: 10px;
 	}
 
-	.linkedin-assist__modal-list {
+	.la-list {
 		max-height: 140px;
 	}
 
-	.linkedin-assist__modal-buttons {
+	.la-modal__actions {
 		flex-direction: column-reverse;
 		align-items: stretch;
+	}
+
+	.la-row {
+		flex-direction: column;
 	}
 }

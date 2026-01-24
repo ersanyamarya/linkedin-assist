@@ -1,6 +1,6 @@
 import type { CommentPromptOptions, Emotion } from "../lib";
-import { ALLOWED_EMOTIONS, CommentPromptOptionsSchema, UI } from "../lib";
-import { createCheckboxList, createInput, createModalBackdrop, createModalContainer, createSection, createSelect, createTextArea } from "./components";
+import { ALLOWED_EMOTIONS, CommentPromptOptionsSchema } from "../lib";
+import { checkboxList, field, modalButtons, modalForm, numberInput, select, showModal, textArea } from "./components";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
@@ -19,75 +19,50 @@ const parseOptionalNumber = (value: string): number | undefined => {
 export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void => {
 	const { postText, comments, onSubmit } = args;
 
-	const backdrop = createModalBackdrop(() => backdrop.remove());
-	const modal = createModalContainer();
+	// Closure to hold reference to close function once modal is shown
+	let closeModal: () => void = () => {};
 
-	const title = document.createElement("div");
-	title.className = UI.CLASSES.MODAL_TITLE;
-	title.textContent = "Draft a LinkedIn comment";
+	const postTextArea = textArea(postText, true);
+	const thoughtsArea = textArea("");
+	const extraInstructionsArea = textArea("If possible, do a quick internet check on the topic so the comment stays accurate and factual.");
+	const emotionSelect = select(ALLOWED_EMOTIONS);
+	const maxLengthInput = numberInput("Optional word limit");
+	const commentsList = checkboxList("Reference comments", comments, "Select comments to incorporate");
 
-	const postTextArea = createTextArea(postText, true);
-	const thoughtsArea = createTextArea("");
-	const extraInstructionsArea = createTextArea("If possible, do a quick internet check on the topic so the comment stays accurate and factual.");
-	const emotionSelect = createSelect(ALLOWED_EMOTIONS);
-	const maxLengthInput = createInput("number", "Optional word limit");
-	const { container: commentsList, rows } = createCheckboxList(comments);
+	const form = modalForm(
+		[
+			field("Post", postTextArea, "Read-only extracted text"),
+			commentsList.el,
+			field("Your perspective", thoughtsArea, "Add your viewpoint or context"),
+			field("Tone", emotionSelect, "Pick the emotional tone"),
+			field("Max length", maxLengthInput, "Leave empty for no limit"),
+			field("Extra instructions", extraInstructionsArea, "Optional guidance"),
+			modalButtons("Cancel", "Generate prompt", () => closeModal()),
+		],
+		(event) => {
+			event.preventDefault();
 
-	const form = document.createElement("form");
-	form.className = UI.CLASSES.MODAL_FORM;
+			const options: CommentPromptOptions = {
+				postText,
+				selectedComments: commentsList.getSelected(),
+				yourThoughts: thoughtsArea.value.trim(),
+				emotion: emotionSelect.value as Emotion,
+				maxLengthWords: parseOptionalNumber(maxLengthInput.value),
+				extraInstructions: extraInstructionsArea.value.trim() || undefined,
+			};
 
-	form.appendChild(createSection("Post", postTextArea, "Read-only extracted text"));
-	form.appendChild(createSection("Reference comments", commentsList, "Select comments to incorporate"));
-	form.appendChild(createSection("Your perspective", thoughtsArea, "Add your viewpoint or context"));
-	form.appendChild(createSection("Tone", emotionSelect, "Pick the emotional tone"));
-	form.appendChild(createSection("Max length", maxLengthInput, "Leave empty for no limit"));
-	form.appendChild(createSection("Extra instructions", extraInstructionsArea, "Optional guidance"));
+			const parsed = CommentPromptOptionsSchema.safeParse(options);
+			if (!parsed.success) {
+				console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
+				alert("Please review the inputs before generating the prompt.");
+				return;
+			}
 
-	const buttonContainer = document.createElement("div");
-	buttonContainer.className = UI.CLASSES.MODAL_BUTTONS;
-
-	const cancelButton = document.createElement("button");
-	cancelButton.type = "button";
-	cancelButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_SECONDARY}`;
-	cancelButton.textContent = UI.TEXT.CANCEL_BUTTON;
-	cancelButton.addEventListener("click", () => backdrop.remove());
-
-	const generateButton = document.createElement("button");
-	generateButton.type = "submit";
-	generateButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_PRIMARY}`;
-	generateButton.textContent = UI.TEXT.GENERATE_BUTTON;
-
-	buttonContainer.appendChild(cancelButton);
-	buttonContainer.appendChild(generateButton);
-
-	form.appendChild(buttonContainer);
-
-	form.addEventListener("submit", (event) => {
-		event.preventDefault();
-
-		const selectedComments = rows.filter((row) => row.checkbox.checked).map((row) => row.value);
-		const options: CommentPromptOptions = {
-			postText,
-			selectedComments,
-			yourThoughts: thoughtsArea.value.trim(),
-			emotion: emotionSelect.value as Emotion,
-			maxLengthWords: parseOptionalNumber(maxLengthInput.value),
-			extraInstructions: extraInstructionsArea.value.trim() || undefined,
-		};
-
-		const parsed = CommentPromptOptionsSchema.safeParse(options);
-		if (!parsed.success) {
-			console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
-			alert("Please review the inputs before generating the prompt.");
-			return;
+			onSubmit(parsed.data);
+			closeModal();
 		}
+	);
 
-		onSubmit(parsed.data);
-		backdrop.remove();
-	});
-
-	modal.appendChild(title);
-	modal.appendChild(form);
-	backdrop.appendChild(modal);
-	document.body.appendChild(backdrop);
+	const { close } = showModal("Draft a LinkedIn comment", form);
+	closeModal = close;
 };

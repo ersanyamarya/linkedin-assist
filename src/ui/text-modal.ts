@@ -1,59 +1,27 @@
-/* A simple modal to show text content
- * It includes a copy to clipboard button
- * and a close button.
+/**
+ * Simple text display modal with copy-to-clipboard functionality.
  */
-
-import { UI } from "../lib/constants";
-import { createModalBackdrop, createModalContainer } from "./components";
+import { btn, el, modalForm, showModal } from "./components";
 
 export const createTextModal = (text: string): void => {
-	// Create backdrop
-	const backdrop = createModalBackdrop(() => backdrop.remove());
-	// Close modal function
-	const closeModal = () => {
-		backdrop.remove();
-	};
-	// Create modal container
-	const modal = createModalContainer();
+	const content = el("div", { className: "la-modal__content", style: "white-space:pre-wrap;font-size:14px;line-height:1.5;color:#333" }, [text]);
 
-	// Create modal content
-	const content = document.createElement("div");
-	content.className = UI.CLASSES.MODAL_CONTENT;
-	content.textContent = text;
+	const copyBtn = btn("Copy", "primary");
+	const closeBtn = btn("Close", "secondary");
 
-	// Create button container
-	const buttonContainer = document.createElement("div");
-	buttonContainer.className = UI.CLASSES.MODAL_BUTTONS;
+	const form = modalForm([content, el("div", { className: "la-modal__actions" }, [copyBtn, closeBtn])], (e) => e.preventDefault());
 
-	// Create copy button
-	const copyButton = document.createElement("button");
-	copyButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_PRIMARY}`;
-	copyButton.textContent = UI.TEXT.COPY_BUTTON;
-	copyButton.addEventListener("click", async () => {
+	const { close } = showModal("", form);
+
+	copyBtn.addEventListener("click", async () => {
 		try {
 			await navigator.clipboard.writeText(text);
-			copyButton.textContent = UI.TEXT.COPIED_TEXT;
-			setTimeout(() => {
-				closeModal();
-			}, 500);
+			copyBtn.textContent = "Copied!";
+			setTimeout(close, 500);
 		} catch (err) {
 			console.error("Failed to copy:", err);
 		}
 	});
 
-	// Create close button
-	const closeButton = document.createElement("button");
-	closeButton.className = `${UI.CLASSES.MODAL_BUTTON} ${UI.CLASSES.MODAL_BUTTON_SECONDARY}`;
-	closeButton.textContent = UI.TEXT.CLOSE_BUTTON;
-	closeButton.addEventListener("click", closeModal);
-
-	// Assemble modal
-	buttonContainer.appendChild(copyButton);
-	buttonContainer.appendChild(closeButton);
-	modal.appendChild(content);
-	modal.appendChild(buttonContainer);
-	backdrop.appendChild(modal);
-
-	// Inject into DOM
-	document.body.appendChild(backdrop);
+	closeBtn.addEventListener("click", close);
 };
