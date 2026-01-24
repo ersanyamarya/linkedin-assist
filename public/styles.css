@@ -64,14 +64,21 @@
 .la-modal__box {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
 	width: min(92vw, 680px);
 	max-height: 80vh;
-	padding: 24px;
-	overflow-y: auto;
+	overflow: hidden;
 	background: var(--la-bg);
 	border-radius: var(--la-radius-lg);
 	box-shadow: var(--la-shadow);
+}
+
+/* --------------------------------------------------------------------------
+   Modal — Header (static)
+   -------------------------------------------------------------------------- */
+.la-modal__header {
+	flex-shrink: 0;
+	padding: 20px 24px 16px;
+	border-bottom: 1px solid var(--la-border-light);
 }
 
 .la-modal__title {
@@ -79,6 +86,24 @@
 	font-size: 18px;
 	font-weight: 600;
 	color: var(--la-text);
+}
+
+/* --------------------------------------------------------------------------
+   Modal — Body (scrollable)
+   -------------------------------------------------------------------------- */
+.la-modal__body {
+	flex: 1 1 auto;
+	padding: 20px 24px;
+	overflow-y: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Modal — Footer (static)
+   -------------------------------------------------------------------------- */
+.la-modal__footer {
+	flex-shrink: 0;
+	padding: 16px 24px 20px;
+	border-top: 1px solid var(--la-border-light);
 }
 
 .la-modal__form {

@@ -1,7 +1,7 @@
 import type { Formality, Intent, Length, Messages, Tone } from "../lib";
 import { ALLOWED_FORMALITIES, ALLOWED_INTENTS, ALLOWED_LENGTHS, ALLOWED_TONES } from "../lib";
 import type { MessagePromptOptions } from "../prompt";
-import { checkbox, field, fieldRow, modalButtons, modalForm, radioGroup, select, showModal, textArea, updateOptions } from "./components";
+import { checkbox, field, fieldRow, modalButtons, modalFooter, modalForm, radioGroup, select, showModal, textArea, updateOptions } from "./components";
 
 type MessageReplyMode = "preset" | "prompt";
 
@@ -138,7 +138,6 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	updateVisibility();
 	updatePreview();
 
-	// Close handler needs to be defined before the form to avoid hoisting issues
 	let closeModal: () => void = () => {};
 
 	const form = modalForm(
@@ -150,7 +149,6 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			promptOptionsRow,
 			ctaSection,
 			instructionsSection,
-			modalButtons("Cancel", "Continue", () => closeModal()),
 		],
 		(event) => {
 			event.preventDefault();
@@ -179,6 +177,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		}
 	);
 
-	const { close } = showModal("Reply to LinkedIn message", form);
+	const footer = modalFooter([modalButtons("Cancel", "Continue", () => closeModal())]);
+	const { close } = showModal("Reply to LinkedIn message", [form], footer);
 	closeModal = close;
 };

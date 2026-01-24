@@ -1,6 +1,6 @@
 import type { CommentPromptOptions, Emotion } from "../lib";
 import { ALLOWED_EMOTIONS, CommentPromptOptionsSchema } from "../lib";
-import { checkboxList, field, modalButtons, modalForm, numberInput, select, showModal, textArea } from "./components";
+import { checkboxList, field, modalButtons, modalFooter, modalForm, numberInput, select, showModal, textArea } from "./components";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
@@ -19,7 +19,6 @@ const parseOptionalNumber = (value: string): number | undefined => {
 export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void => {
 	const { postText, comments, onSubmit } = args;
 
-	// Closure to hold reference to close function once modal is shown
 	let closeModal: () => void = () => {};
 
 	const postTextArea = textArea(postText, true);
@@ -37,7 +36,6 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 			field("Tone", emotionSelect, "Pick the emotional tone"),
 			field("Max length", maxLengthInput, "Leave empty for no limit"),
 			field("Extra instructions", extraInstructionsArea, "Optional guidance"),
-			modalButtons("Cancel", "Generate prompt", () => closeModal()),
 		],
 		(event) => {
 			event.preventDefault();
@@ -63,6 +61,7 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 		}
 	);
 
-	const { close } = showModal("Draft a LinkedIn comment", form);
+	const footer = modalFooter([modalButtons("Cancel", "Generate prompt", () => closeModal())]);
+	const { close } = showModal("Draft a LinkedIn comment", [form], footer);
 	closeModal = close;
 };

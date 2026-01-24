@@ -1,7 +1,7 @@
 /**
  * Simple text display modal with copy-to-clipboard functionality.
  */
-import { btn, el, modalForm, showModal } from "./components";
+import { btn, el, modalFooter, showModal } from "./components";
 
 export const createTextModal = (text: string): void => {
 	const content = el("div", { className: "la-modal__content", style: "white-space:pre-wrap;font-size:14px;line-height:1.5;color:#333" }, [text]);
@@ -9,9 +9,9 @@ export const createTextModal = (text: string): void => {
 	const copyBtn = btn("Copy", "primary");
 	const closeBtn = btn("Close", "secondary");
 
-	const form = modalForm([content, el("div", { className: "la-modal__actions" }, [copyBtn, closeBtn])], (e) => e.preventDefault());
+	const footer = modalFooter([el("div", { className: "la-modal__actions" }, [closeBtn, copyBtn])]);
 
-	const { close } = showModal("", form);
+	const { close } = showModal("Generated Prompt", [content], footer);
 
 	copyBtn.addEventListener("click", async () => {
 		try {

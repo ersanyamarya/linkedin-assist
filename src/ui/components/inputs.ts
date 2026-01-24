@@ -58,7 +58,7 @@ export const checkboxList = (legend: string, items: readonly string[], hint?: st
 		return { input: cb.input, value: item, row: cb.el };
 	});
 
-	const content = boxes.map((b) => b.row);
+	const content: Node[] = boxes.map((b) => b.row);
 	if (hint) content.push(el("small", { className: "la-hint" }, [hint]));
 
 	const fs = fieldset(legend, content, "la-list");
