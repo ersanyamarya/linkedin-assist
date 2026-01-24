@@ -1,19 +1,20 @@
-import { buildMessagesPrompt, buildPostCommentsPrompt, createTextModal, DOM, MessagesSchema, PostCommentsSchema, THEME, UI } from "../shared";
+import { buildMessagesPrompt, buildPostCommentsPrompt, DOM, MessagesSchema, PostCommentsSchema, UI } from "../lib";
+import { createTextModal } from "../ui";
 
-const randomLightHexColor = (): string => {
-	let color = "#";
-	for (let i = 0; i < 6; i++) {
-		color += THEME.LIGHT_HEX_LETTERS[Math.floor(Math.random() * THEME.LIGHT_HEX_LETTERS.length)];
-	}
-	return color;
-};
+// const randomLightHexColor = (): string => {
+// 	let color = "#";
+// 	for (let i = 0; i < 6; i++) {
+// 		color += THEME.LIGHT_HEX_LETTERS[Math.floor(Math.random() * THEME.LIGHT_HEX_LETTERS.length)];
+// 	}
+// 	return color;
+// };
 
 export const loadedCommentScript = () => {
 	for (const commentBox of Array.from(document.querySelectorAll(DOM.SELECTORS.EDITABLE_COMMENT_BOX)).filter(
 		(commentBox) => !commentBox.hasAttribute(DOM.ATTR.DATA_MUTATED)
 	)) {
 		commentBox.setAttribute(DOM.ATTR.DATA_MUTATED, "true");
-		(commentBox as HTMLElement).style.backgroundColor = randomLightHexColor();
+		// (commentBox as HTMLElement).style.backgroundColor = randomLightHexColor();
 		addSuggestionButton(commentBox);
 	}
 };

@@ -3,7 +3,7 @@
  * and a close button.
  */
 
-import { UI } from "./constants";
+import { UI } from "../lib/constants";
 
 export const createTextModal = (text: string): void => {
 	// Create backdrop
