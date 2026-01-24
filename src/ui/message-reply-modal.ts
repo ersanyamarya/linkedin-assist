@@ -22,10 +22,35 @@ type MessageReplyModalArgs = {
 	readonly onSubmit: (result: MessageReplyModalResult) => void;
 };
 
+const SIGNATURE_REGARDS = "Regards,\nSanyam Arya";
+const SIGNATURE_BEST = "Best, Sanyam";
+
 const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
-	{ id: "thanks-connect", label: "Thanks for reaching out", template: "Thanks for reaching out, {name}! Happy to connect." },
-	{ id: "follow-up", label: "Follow up", template: "Appreciate the note, {name}. I'll take a look and get back to you shortly." },
-	{ id: "schedule", label: "Schedule a chat", template: "Thanks, {name}! What's the best time for a quick chat?" },
+	{
+		id: "nohelp",
+		label: "No help needed",
+		template: `Hello {name},\n\nThanks for connecting!\n\nTWhile I don't currently have an immediate need for your services, I'll keep your information in mind should anything change.\n\n${SIGNATURE_REGARDS}`,
+	},
+	{
+		id: "nohire",
+		label: "Not hiring",
+		template: `Hi {name},\n\nThanks for connecting!\n\nTWhile we're not actively hiring currently, I'll be sure to reach out if our needs evolve.\n\nT${SIGNATURE_REGARDS}`,
+	},
+	{
+		id: "connect",
+		label: "Happy to connect",
+		template: `Hi {name},\n\nI am happy to connect with you. Looking forward to our interactions.\n\nT${SIGNATURE_REGARDS}`,
+	},
+	{
+		id: "reject",
+		label: "Not seeking opportunities",
+		template: `Hi {name},\n\nThanks for reaching out! While I'm not actively seeking new opportunities right now, I'll be sure to reach out if that changes.\n\nT${SIGNATURE_REGARDS}`,
+	},
+	{
+		id: "notyet",
+		label: "Not yet",
+		template: `Hi {name}, \n\nThank you for your interest.\n\nTWe're currently focused on existing priorities, but feel free to check back in a few months.\n\nT${SIGNATURE_BEST}`,
+	},
 ];
 
 const normalize = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
