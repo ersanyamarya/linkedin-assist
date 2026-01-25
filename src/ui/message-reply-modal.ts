@@ -49,7 +49,7 @@ const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
 	{
 		id: "notyet",
 		label: "Not yet",
-		template: `Hi {name}, \n\nThank you for your interest.\n\nTWe're currently focused on existing priorities, but feel free to check back in a few months.\n\nT${SIGNATURE_BEST}`,
+		template: `Hi {name}, \n\nThank you for your interest.\n\nWe're currently focused on existing priorities, but feel free to check back in a few months.\n\nT${SIGNATURE_BEST}`,
 	},
 ];
 
