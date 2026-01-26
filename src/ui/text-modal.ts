@@ -4,7 +4,17 @@
 import { btn, el, modalFooter, showModal } from "./components";
 
 export const createTextModal = (text: string): void => {
-	const content = el("div", { className: "la-modal__content", style: "white-space:pre-wrap;font-size:14px;line-height:1.5;color:#333" }, [text]);
+	const normalizedText = text.replace(/\n{3,}/g, "\n\n");
+	const content = el(
+		"textarea",
+		{
+			className: "la-modal__content la-textarea",
+			readOnly: true,
+			value: normalizedText,
+			style: "min-height:420px;font-size:14px;line-height:1.5;color:#333",
+		},
+		[]
+	);
 
 	const copyBtn = btn("Copy", "primary");
 	const closeBtn = btn("Close", "secondary");
@@ -15,7 +25,7 @@ export const createTextModal = (text: string): void => {
 
 	copyBtn.addEventListener("click", async () => {
 		try {
-			await navigator.clipboard.writeText(text);
+			await navigator.clipboard.writeText(normalizedText);
 			copyBtn.textContent = "Copied!";
 			setTimeout(close, 500);
 		} catch (err) {
