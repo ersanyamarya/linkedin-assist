@@ -1,5 +1,5 @@
 import type { CommentPromptOptions } from "../lib";
-import { DOM, MessagesSchema, PostCommentsSchema, UI } from "../lib";
+import { DOM, ensureEnterToSend, MessagesSchema, PostCommentsSchema, setEditableText, UI } from "../lib";
 import { buildLinkedInCommentPrompt, buildMessagesPrompt } from "../prompt";
 import { applyMessageTemplate, createMessageReplyModal, createPostCommentPromptModal, createTextModal, MESSAGE_REPLY_PRESETS } from "../ui";
 
@@ -11,7 +11,7 @@ import { applyMessageTemplate, createMessageReplyModal, createPostCommentPromptM
 // 	return color;
 // };
 
-export const loadedCommentScript = () => {
+const observer = new MutationObserver(() => {
 	for (const editableTextArea of Array.from(document.querySelectorAll(DOM.SELECTORS.EDITABLE_COMMENT_BOX)).filter(
 		(editableTextArea) => !editableTextArea.hasAttribute(DOM.ATTR.DATA_MUTATED)
 	)) {
@@ -19,7 +19,9 @@ export const loadedCommentScript = () => {
 		// (editableTextArea as HTMLElement).style.backgroundColor = randomLightHexColor();
 		addSuggestionButton(editableTextArea);
 	}
-};
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
 
 /**
  * Finds the feed container that owns the editor.
@@ -237,36 +239,6 @@ const createSuggestionButton = (onClick: () => void): HTMLButtonElement => {
 	return button;
 };
 
-const escapeHtml = (value: string): string =>
-	value.replace(
-		/[&<>"']/g,
-		(char) =>
-			({
-				"&": "&amp;",
-				"<": "&lt;",
-				">": "&gt;",
-				'"': "&quot;",
-				"'": "&#39;",
-			})[char] ?? char
-	);
-
-const setEditableText = (editableTextArea: Element, text: string) => {
-	const target = editableTextArea as HTMLElement;
-	target.focus();
-	target.textContent = "";
-	target.removeAttribute("data-placeholder");
-	target.removeAttribute("data-placeholder-rtl");
-	target.dispatchEvent(new InputEvent("input", { bubbles: true }));
-	const normalized = text.replace(/\r\n/g, "\n");
-	const html = normalized
-		.split("\n")
-		.map((line) => escapeHtml(line))
-		.join("<br>");
-	target.innerHTML = html;
-	target.dispatchEvent(new InputEvent("input", { bubbles: true }));
-	target.focus();
-};
-
 const createPresetPanel = (editableTextArea: Element): HTMLDivElement => {
 	const panel = document.createElement("div");
 	panel.classList.add(UI.CLASSES.PRESET_PANEL);
@@ -407,6 +379,7 @@ const handleSuggestionClick = (editableTextArea: Element) => {
  */
 const addSuggestionButton = (editableTextArea: Element) => {
 	const panel = isMessagingThread() ? createPresetPanel(editableTextArea) : undefined;
+	if (panel) ensureEnterToSend(editableTextArea as HTMLElement);
 	const button = createSuggestionButton(() => {
 		if (panel) {
 			panel.style.display = panel.style.display === "none" ? "" : "none";

@@ -6,7 +6,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.linkedin.com/*"],
-      "js": ["content/index.js"],
+      "js": ["src/content-scripts/editableTextArea.js"],
       "css": ["styles.css"]
     }
   ],
