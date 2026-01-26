@@ -42,6 +42,40 @@
 	border: none;
 }
 
+.linkedin-assist__quick-actions {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	margin-left: 8px;
+}
+
+.linkedin-assist__preset-panel {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.linkedin-assist__preset-item {
+	padding: 4px 8px;
+	font-size: 12px;
+	line-height: 1.2;
+	color: var(--la-text);
+	cursor: pointer;
+	background: var(--la-bg-muted);
+	border: 1px solid var(--la-border-light);
+	border-radius: 999px;
+}
+
+.linkedin-assist__preset-item:hover {
+	background: #f0f0f0;
+}
+
+.linkedin-assist__preset-item--advanced {
+	color: var(--la-primary);
+	background: #eef5ff;
+	border-color: var(--la-primary);
+}
+
 .linkedin-assist__commentary-text {
 	padding: 2px;
 	border: 1px solid #99cc00;

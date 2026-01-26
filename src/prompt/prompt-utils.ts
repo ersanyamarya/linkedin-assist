@@ -1,7 +1,7 @@
 export const asFencedBlock = (label: string, content: string): string => {
 	const body = content.trim() || "(empty)";
-	return `## ${label}\n\n\
-\`\`\`text\n${body}\n\`\`\``;
+	return `## ${label}\n
+\`\`\`\n${body}\n\`\`\``;
 };
 
 export const joinSections = (sections: readonly string[]): string =>

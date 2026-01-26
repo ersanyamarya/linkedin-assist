@@ -35,6 +35,10 @@ export const UI = {
 	CLASSES: {
 		BUTTON_DEFAULTS: ["artdeco-button", "artdeco-button--muted", "artdeco-button--tertiary", "artdeco-button--circle"],
 		SUGGESTION_BUTTON: "linkedin-assist__suggestion-button",
+		QUICK_ACTIONS: "linkedin-assist__quick-actions",
+		PRESET_PANEL: "linkedin-assist__preset-panel",
+		PRESET_ITEM: "linkedin-assist__preset-item",
+		PRESET_ITEM_ADVANCED: "linkedin-assist__preset-item--advanced",
 		COMMENT_ROW: "linkedin-assist__comment-row",
 		COMMENT_EDITOR: "linkedin-assist__comment-editor",
 		COMMENTARY_TEXT: "linkedin-assist__commentary-text",

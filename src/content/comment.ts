@@ -1,7 +1,7 @@
 import type { CommentPromptOptions } from "../lib";
 import { DOM, MessagesSchema, PostCommentsSchema, UI } from "../lib";
 import { buildLinkedInCommentPrompt, buildMessagesPrompt } from "../prompt";
-import { createMessageReplyModal, createPostCommentPromptModal, createTextModal } from "../ui";
+import { applyMessageTemplate, createMessageReplyModal, createPostCommentPromptModal, createTextModal, MESSAGE_REPLY_PRESETS } from "../ui";
 
 // const randomLightHexColor = (): string => {
 // 	let color = "#";
@@ -12,12 +12,12 @@ import { createMessageReplyModal, createPostCommentPromptModal, createTextModal 
 // };
 
 export const loadedCommentScript = () => {
-	for (const commentBox of Array.from(document.querySelectorAll(DOM.SELECTORS.EDITABLE_COMMENT_BOX)).filter(
-		(commentBox) => !commentBox.hasAttribute(DOM.ATTR.DATA_MUTATED)
+	for (const editableTextArea of Array.from(document.querySelectorAll(DOM.SELECTORS.EDITABLE_COMMENT_BOX)).filter(
+		(editableTextArea) => !editableTextArea.hasAttribute(DOM.ATTR.DATA_MUTATED)
 	)) {
-		commentBox.setAttribute(DOM.ATTR.DATA_MUTATED, "true");
-		// (commentBox as HTMLElement).style.backgroundColor = randomLightHexColor();
-		addSuggestionButton(commentBox);
+		editableTextArea.setAttribute(DOM.ATTR.DATA_MUTATED, "true");
+		// (editableTextArea as HTMLElement).style.backgroundColor = randomLightHexColor();
+		addSuggestionButton(editableTextArea);
 	}
 };
 
@@ -25,8 +25,8 @@ export const loadedCommentScript = () => {
  * Finds the feed container that owns the editor.
  * Works on both feed list and single post pages.
  */
-const findFeedContainer = (commentBox: Element): Element | null => {
-	let container = commentBox.closest(DOM.SELECTORS.FEED_FULL_UPDATE) ?? commentBox.closest(DOM.SELECTORS.ROLE_LISTITEM);
+const findFeedContainer = (editableTextArea: Element): Element | null => {
+	let container = editableTextArea.closest(DOM.SELECTORS.FEED_FULL_UPDATE) ?? editableTextArea.closest(DOM.SELECTORS.ROLE_LISTITEM);
 
 	if (!container) {
 		container = document.querySelector('div[class*="feed-shared-update-v2__control-menu-container"]');
@@ -39,8 +39,8 @@ const findFeedContainer = (commentBox: Element): Element | null => {
  * Finds the commentary text element for the feed item containing the editor.
  * Works on both feed list and single post pages.
  */
-const findCommentaryTextElement = (commentBox: Element): Element | null => {
-	const container = findFeedContainer(commentBox);
+const findCommentaryTextElement = (editableTextArea: Element): Element | null => {
+	const container = findFeedContainer(editableTextArea);
 	if (!container) return null;
 
 	const commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
@@ -66,8 +66,8 @@ const extractCommentaryText = (commentary: Element): string => {
  * Extracts comment text from the comment list within the same feed item.
  * Works on both feed list and single post pages.
  */
-const extractPostComments = (commentBox: Element): string[] => {
-	const container = findFeedContainer(commentBox);
+const extractPostComments = (editableTextArea: Element): string[] => {
+	const container = findFeedContainer(editableTextArea);
 	if (!container) return [];
 
 	const commentaries = Array.from(container.querySelectorAll(DOM.SELECTORS.COMMENT_COMMENTARY));
@@ -90,8 +90,8 @@ const extractPostComments = (commentBox: Element): string[] => {
  * Extracts the feed post text from the commentary section.
  * Handles both feed list and single post page structures.
  */
-const extractPostContent = (commentBox: Element): string => {
-	const commentaryTextElement = findCommentaryTextElement(commentBox);
+const extractPostContent = (editableTextArea: Element): string => {
+	const commentaryTextElement = findCommentaryTextElement(editableTextArea);
 	if (!commentaryTextElement) return "";
 
 	if (commentaryTextElement.classList.contains("update-components-update-v2__commentary")) {
@@ -106,13 +106,15 @@ const extractPostContent = (commentBox: Element): string => {
 /**
  * Extracts the feed post content and comment array.
  */
-const extractPostDetails = (commentBox: Element): { postText: string; comments: string[] } => {
-	const postText = extractPostContent(commentBox);
-	const comments = extractPostComments(commentBox);
+const extractPostDetails = (editableTextArea: Element): { postText: string; comments: string[] } => {
+	const postText = extractPostContent(editableTextArea);
+	const comments = extractPostComments(editableTextArea);
 	return { postText, comments };
 };
 
 const normalizeWhitespace = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
+
+const ADVANCED_PRESET_LABEL = "Advance";
 
 const isOnMessagingThreadRoute = (): boolean => window.location.pathname.startsWith("/messaging/thread/");
 
@@ -235,23 +237,94 @@ const createSuggestionButton = (onClick: () => void): HTMLButtonElement => {
 	return button;
 };
 
+const escapeHtml = (value: string): string =>
+	value.replace(
+		/[&<>"']/g,
+		(char) =>
+			({
+				"&": "&amp;",
+				"<": "&lt;",
+				">": "&gt;",
+				'"': "&quot;",
+				"'": "&#39;",
+			})[char] ?? char
+	);
+
+const setEditableText = (editableTextArea: Element, text: string) => {
+	const target = editableTextArea as HTMLElement;
+	target.focus();
+	target.textContent = "";
+	target.removeAttribute("data-placeholder");
+	target.removeAttribute("data-placeholder-rtl");
+	target.dispatchEvent(new InputEvent("input", { bubbles: true }));
+	const normalized = text.replace(/\r\n/g, "\n");
+	const html = normalized
+		.split("\n")
+		.map((line) => escapeHtml(line))
+		.join("<br>");
+	target.innerHTML = html;
+	target.dispatchEvent(new InputEvent("input", { bubbles: true }));
+	target.focus();
+};
+
+const createPresetPanel = (editableTextArea: Element): HTMLDivElement => {
+	const panel = document.createElement("div");
+	panel.classList.add(UI.CLASSES.PRESET_PANEL);
+	panel.style.display = "none";
+
+	const recipientName = extractSenderName();
+
+	const presetButtons = MESSAGE_REPLY_PRESETS.map((preset) => {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.classList.add(UI.CLASSES.PRESET_ITEM);
+		button.textContent = preset.label;
+		button.addEventListener("click", () => {
+			const message = applyMessageTemplate(preset.template, recipientName);
+			setEditableText(editableTextArea, message);
+			panel.style.display = "none";
+		});
+		return button;
+	});
+
+	const advancedButton = document.createElement("button");
+	advancedButton.type = "button";
+	advancedButton.classList.add(UI.CLASSES.PRESET_ITEM, UI.CLASSES.PRESET_ITEM_ADVANCED);
+	advancedButton.textContent = ADVANCED_PRESET_LABEL;
+	advancedButton.addEventListener("click", () => {
+		panel.style.display = "none";
+		openMessagingPromptModal();
+	});
+
+	for (const button of [...presetButtons, advancedButton]) {
+		panel.appendChild(button);
+	}
+
+	return panel;
+};
+
 /**
  * Adds comment-row styling and button to the editor row.
  */
-const attachButtonToCommentRow = (commentBox: Element, button: HTMLButtonElement) => {
-	const parent = commentBox.parentElement;
-	parent?.appendChild(button);
-	if (parent) {
-		parent.classList.add(UI.CLASSES.COMMENT_ROW);
-	}
-	(commentBox as HTMLElement).classList.add(UI.CLASSES.COMMENT_EDITOR);
+const attachButtonToCommentRow = (editableTextArea: Element, button: HTMLButtonElement, panel?: HTMLDivElement) => {
+	const parent = editableTextArea.parentElement;
+	if (!parent) return;
+
+	const actions = document.createElement("div");
+	actions.classList.add(UI.CLASSES.QUICK_ACTIONS);
+	actions.appendChild(button);
+	if (panel) actions.appendChild(panel);
+	parent.appendChild(actions);
+
+	parent.classList.add(UI.CLASSES.COMMENT_ROW);
+	(editableTextArea as HTMLElement).classList.add(UI.CLASSES.COMMENT_EDITOR);
 };
 
 /**
  * Tags the feed commentary text element for styling.
  */
-const markCommentaryText = (commentBox: Element) => {
-	const commentaryTextElement = findCommentaryTextElement(commentBox);
+const markCommentaryText = (editableTextArea: Element) => {
+	const commentaryTextElement = findCommentaryTextElement(editableTextArea);
 	if (!commentaryTextElement) {
 		return;
 	}
@@ -263,75 +336,86 @@ const markCommentaryText = (commentBox: Element) => {
  * Handles suggestion button clicks for a comment editor.
  * Detects if we're on a messaging thread or a regular post and extracts accordingly.
  */
-const handleSuggestionClick = (commentBox: Element) => {
-	if (isMessagingThread()) {
-		const { senderName, messages } = extractMessagingThreadDetails();
-		if (!senderName && messages.length === 0) {
-			alert("Could not extract messaging thread details.");
-			return;
-		}
+const openMessagingPromptModal = () => {
+	const { senderName, messages } = extractMessagingThreadDetails();
+	if (!senderName && messages.length === 0) {
+		alert("Could not extract messaging thread details.");
+		return;
+	}
 
-		const parsed = MessagesSchema.safeParse({ senderName, messages });
-		if (!parsed.success) {
-			console.warn("LinkedIn Assist messaging schema validation failed:", {
-				issues: parsed.error.issues,
-				senderName,
-				messages,
-			});
-			alert("Extracted messaging data could not be validated.");
-			return;
-		}
-
-		console.log("LinkedIn Assist extracted from message:", {
+	const parsed = MessagesSchema.safeParse({ senderName, messages });
+	if (!parsed.success) {
+		console.warn("LinkedIn Assist messaging schema validation failed:", {
+			issues: parsed.error.issues,
 			senderName,
 			messages,
 		});
-		createMessageReplyModal({
-			data: parsed.data,
-			buildPrompt: buildMessagesPrompt,
-			onSubmit: (result) => {
-				createTextModal(result.text);
-			},
-		});
-	} else {
-		const { postText, comments } = extractPostDetails(commentBox);
-		if (!postText) {
-			alert("Could not extract post content.");
-			return;
-		}
+		alert("Extracted messaging data could not be validated.");
+		return;
+	}
 
-		const parsed = PostCommentsSchema.safeParse({ postText, comments });
-		if (!parsed.success) {
-			console.warn("LinkedIn Assist post schema validation failed:", {
-				issues: parsed.error.issues,
-				postText,
-				comments,
-			});
-			alert("Extracted post data could not be validated.");
-			return;
-		}
+	console.log("LinkedIn Assist extracted from message:", {
+		senderName,
+		messages,
+	});
+	createMessageReplyModal({
+		data: parsed.data,
+		buildPrompt: buildMessagesPrompt,
+		onSubmit: (result) => {
+			createTextModal(result.text);
+		},
+	});
+};
 
-		console.log("LinkedIn Assist extracted from post:", {
+const openPostPromptModal = (editableTextArea: Element) => {
+	const { postText, comments } = extractPostDetails(editableTextArea);
+	if (!postText) {
+		alert("Could not extract post content.");
+		return;
+	}
+
+	const parsed = PostCommentsSchema.safeParse({ postText, comments });
+	if (!parsed.success) {
+		console.warn("LinkedIn Assist post schema validation failed:", {
+			issues: parsed.error.issues,
 			postText,
 			comments,
 		});
-		createPostCommentPromptModal({
-			postText: parsed.data.postText,
-			comments: parsed.data.comments,
-			onSubmit: (options: CommentPromptOptions) => {
-				createTextModal(buildLinkedInCommentPrompt(options));
-			},
-		});
+		alert("Extracted post data could not be validated.");
+		return;
 	}
+
+	console.log("LinkedIn Assist extracted from post:", {
+		postText,
+		comments,
+	});
+	createPostCommentPromptModal({
+		postText: parsed.data.postText,
+		comments: parsed.data.comments,
+		onSubmit: (options: CommentPromptOptions) => {
+			createTextModal(buildLinkedInCommentPrompt(options));
+		},
+	});
+};
+
+const handleSuggestionClick = (editableTextArea: Element) => {
+	openPostPromptModal(editableTextArea);
 };
 
 /**
  * Adds a suggestion button next to the comment editor.
  */
-const addSuggestionButton = (commentBox: Element) => {
-	const button = createSuggestionButton(() => handleSuggestionClick(commentBox));
-	attachButtonToCommentRow(commentBox, button);
+const addSuggestionButton = (editableTextArea: Element) => {
+	const panel = isMessagingThread() ? createPresetPanel(editableTextArea) : undefined;
+	const button = createSuggestionButton(() => {
+		if (panel) {
+			panel.style.display = panel.style.display === "none" ? "" : "none";
+			return;
+		}
+		handleSuggestionClick(editableTextArea);
+	});
+	attachButtonToCommentRow(editableTextArea, button, panel);
 	if (!isMessagingThread()) {
-		markCommentaryText(commentBox);
+		markCommentaryText(editableTextArea);
 	}
 };

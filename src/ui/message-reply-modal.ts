@@ -5,7 +5,7 @@ import { checkbox, field, fieldRow, modalButtons, modalFooter, modalForm, radioG
 
 type MessageReplyMode = "preset" | "prompt";
 
-type MessageReplyPreset = {
+export type MessageReplyPreset = {
 	readonly id: string;
 	readonly label: string;
 	readonly template: string;
@@ -25,31 +25,34 @@ type MessageReplyModalArgs = {
 const SIGNATURE_REGARDS = "Regards,\nSanyam Arya";
 const SIGNATURE_BEST = "Best, Sanyam";
 
-const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
+export const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
 	{
 		id: "nohelp",
 		label: "No help needed",
-		template: `Hello {name},\n\nThanks for connecting!\n\nTWhile I don't currently have an immediate need for your services, I'll keep your information in mind should anything change.\n\n${SIGNATURE_REGARDS}`,
+		template: `Hello {name},\n\nThanks for connecting!\n\nWhile I don't currently have an immediate need for your services, I'll keep your information in mind should anything change.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "nohire",
 		label: "Not hiring",
-		template: `Hi {name},\n\nThanks for connecting!\n\nTWhile we're not actively hiring currently, I'll be sure to reach out if our needs evolve.\n\nT${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nThanks for connecting!\n\nWhile we're not actively hiring currently, I'll be sure to reach out if our needs evolve.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "connect",
 		label: "Happy to connect",
-		template: `Hi {name},\n\nI am happy to connect with you. Looking forward to our interactions.\n\nT${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nI am happy to connect with you. Looking forward to our interactions.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "reject",
 		label: "Not seeking opportunities",
-		template: `Hi {name},\n\nThanks for reaching out! While I'm not actively seeking new opportunities right now, I'll be sure to reach out if that changes.\n\nT${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nThanks for reaching out! While I'm not actively seeking new opportunities right now, I'll be sure to reach out if that changes.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "notyet",
 		label: "Not yet",
-		template: `Hi {name}, \n\nThank you for your interest.\n\nWe're currently focused on existing priorities, but feel free to check back in a few months.\n\nT${SIGNATURE_BEST}`,
+		template: `Hi {name}, \n\nThank you for your interest.\n\nWe're currently focused on existing priorities, but feel free to check back in a few months.\n\n${
+			/* `SIGNATURE_BEST` is a constant string that contains a signature typically used at the end of a message. In this case, it includes the closing "Best," followed by the name "Sanyam". It is used as part of the message templates in the `MESSAGE_REPLY_PRESETS` array to provide a consistent signature for certain types of replies. */
+			SIGNATURE_BEST
+		}`,
 	},
 ];
 
@@ -71,7 +74,7 @@ const collectParticipants = (data: Messages): readonly string[] => {
 	return uniqueNames([...messageNames, senderName].filter((n) => n.length > 0));
 };
 
-const applyTemplate = (template: string, name: string): string => template.replace(/\{name\}/g, name || "there");
+export const applyMessageTemplate = (template: string, name: string): string => template.replace(/\{name\}/g, name || "there");
 
 /**
  * Creates a modal for replying to LinkedIn message threads.
@@ -146,7 +149,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	// Update preview
 	const updatePreview = () => {
 		const preset = MESSAGE_REPLY_PRESETS.find((p) => p.label === presetSelect.value) ?? MESSAGE_REPLY_PRESETS[0];
-		presetPreview.value = applyTemplate(preset?.template ?? "", recipientSelect.value);
+		presetPreview.value = applyMessageTemplate(preset?.template ?? "", recipientSelect.value);
 	};
 
 	// Wire events
