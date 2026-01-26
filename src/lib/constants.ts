@@ -24,10 +24,20 @@ export const DOM = {
 		MESSAGING_MESSAGE_EVENT: "li.msg-s-message-list__event",
 		// Prefer the message meta/header area to avoid matching profile links inside message body (@mentions).
 		MESSAGING_SENDER_NAME: ".msg-s-message-group__meta a[href*='/in/']",
+		// Job details page selectors
+		JOB_SAVE_BUTTON: ".jobs-save-button",
+		JOB_TOP_CARD: ".job-details-jobs-unified-top-card",
+		JOB_TITLE: ".job-details-jobs-unified-top-card__job-title h1",
+		JOB_COMPANY_NAME: ".job-details-jobs-unified-top-card__company-name a",
+		JOB_PRIMARY_DESCRIPTION: ".job-details-jobs-unified-top-card__primary-description-container",
+		JOB_PREFERENCES: ".job-details-fit-level-preferences button",
+		JOB_DESCRIPTION_BODY: "#job-details",
+		JOB_DESCRIPTION_BODY_FALLBACK: ".jobs-description-content__text--stretch",
 	},
 
 	ATTR: {
 		DATA_MUTATED: "data-mutated",
+		DATA_JOB_IDEA: "data-la-job-idea",
 	},
 };
 
