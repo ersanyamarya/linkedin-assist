@@ -17,7 +17,7 @@ const observer = new MutationObserver(() => {
 	)) {
 		editableTextArea.setAttribute(DOM.ATTR.DATA_MUTATED, "true");
 		// (editableTextArea as HTMLElement).style.backgroundColor = randomLightHexColor();
-		addSuggestionButton(editableTextArea);
+		addIdeaButton(editableTextArea);
 	}
 });
 
@@ -230,7 +230,7 @@ const extractMessagingThreadDetails = (): {
 /**
  * Builds the suggestion button element.
  */
-const createSuggestionButton = (onClick: () => void): HTMLButtonElement => {
+const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 	const button = document.createElement("button");
 	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.SUGGESTION_BUTTON);
 	button.type = "button";
@@ -377,10 +377,10 @@ const handleSuggestionClick = (editableTextArea: Element) => {
 /**
  * Adds a suggestion button next to the comment editor.
  */
-const addSuggestionButton = (editableTextArea: Element) => {
+const addIdeaButton = (editableTextArea: Element) => {
 	const panel = isMessagingThread() ? createPresetPanel(editableTextArea) : undefined;
 	if (panel) ensureEnterToSend(editableTextArea as HTMLElement);
-	const button = createSuggestionButton(() => {
+	const button = createIdeaButton(() => {
 		if (panel) {
 			panel.style.display = panel.style.display === "none" ? "" : "none";
 			return;
