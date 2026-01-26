@@ -114,6 +114,8 @@ bun run clean
 - **Idempotent DOM changes**: Editors marked with `data-mutated` to prevent duplicate processing
 - **UI prefix**: All extension UI elements use `linkedin-assist__*` class names to avoid conflicts
 - **Prompt formatting**: Reuse helpers in `src/prompt/prompt-utils.ts` for consistent output
+- **Messaging presets**: Reply presets live in `src/ui/message-reply-modal.ts` and are applied via `applyMessageTemplate()`
+- **UI components**: Modal and input building blocks live in `src/ui/components/` for reuse
 - **Shared utilities**: Constants, icons, and text strings re-exported via `src/lib/index.ts`
 
 ---
