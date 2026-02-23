@@ -21,7 +21,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Comment Row (suggestion button injection)
+   Comment Row (idea button injection)
    -------------------------------------------------------------------------- */
 .linkedin-assist__comment-row {
 	display: flex;
@@ -33,7 +33,7 @@
 	flex: 1;
 }
 
-.linkedin-assist__suggestion-button {
+.linkedin-assist__idea-button {
 	align-self: center;
 	padding: 1px;
 	margin-left: 8px;

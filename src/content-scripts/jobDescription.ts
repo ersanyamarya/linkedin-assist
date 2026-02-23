@@ -34,36 +34,43 @@ const getJobDescriptionBody = (): string => {
 	return text.trim();
 };
 
-const buildMetadataSection = (items: ReadonlyArray<{ label: string; value: string }>): string => {
-	const lines = items.map((item) => (item.value ? `${item.label}: ${item.value}` : "")).filter((line) => line.length > 0);
+// const buildMetadataSection = (items: ReadonlyArray<{ label: string; value: string }>): string => {
+// 	const lines = items.map((item) => (item.value ? `${item.label}: ${item.value}` : "")).filter((line) => line.length > 0);
 
-	if (lines.length === 0) return "";
-	return `Metadata:\n${lines.join("\n")}`;
-};
+// 	if (lines.length === 0) return "";
+// 	return `Metadata:\n${lines.join("\n")}`;
+// };
 
-const buildJobSnapshot = (): string => {
+const buildJobSnapshot = () => {
 	const title = getTextContent(DOM.SELECTORS.JOB_TITLE);
 	const company = getTextContent(DOM.SELECTORS.JOB_COMPANY_NAME);
 	const details = getTextContent(DOM.SELECTORS.JOB_PRIMARY_DESCRIPTION);
 	const preferences = getPreferenceText();
 	const description = getJobDescriptionBody();
 
-	const metadata = buildMetadataSection([
-		{ label: "Title", value: title },
-		{ label: "Company", value: company },
-		{ label: "Details", value: details },
-		{ label: "Preferences", value: preferences },
-	]);
+	// const metadata = buildMetadataSection([
+	// 	{ label: "Title", value: title },
+	// 	{ label: "Company", value: company },
+	// 	{ label: "Details", value: details },
+	// 	{ label: "Preferences", value: preferences },
+	// ]);
 
-	const sections = [metadata, description ? `Description:\n${description}` : ""].filter((section) => section.length > 0);
-	return sections.join("\n\n");
+	return {
+		metadata: {
+			title,
+			company,
+			details,
+			preferences,
+		},
+		description,
+	};
 };
 
 const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 	const button = document.createElement("button");
-	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.SUGGESTION_BUTTON);
+	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.IDEA_BUTTON);
 	button.type = "button";
-	button.innerHTML = UI.SVG.SUGGESTION;
+	button.innerHTML = UI.SVG.IDEA;
 	button.addEventListener("click", onClick);
 	return button;
 };
@@ -74,8 +81,10 @@ const showJobModal = () => {
 		alert("Could not extract job details.");
 		return;
 	}
+	// const sections = [snapshot.metadata, snapshot.description ? `Description:\n${snapshot.description}` : ""].filter((section) => section.length > 0);
+	// const snapshotText = sections.join("\n\n");
 
-	createTextModal(snapshot);
+	createTextModal(JSON.stringify(snapshot, null, 2));
 };
 
 const attachIdeaButton = (saveButton: Element) => {

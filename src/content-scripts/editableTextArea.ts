@@ -228,13 +228,13 @@ const extractMessagingThreadDetails = (): {
 };
 
 /**
- * Builds the suggestion button element.
+ * Builds the idea button element.
  */
 const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 	const button = document.createElement("button");
-	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.SUGGESTION_BUTTON);
+	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.IDEA_BUTTON);
 	button.type = "button";
-	button.innerHTML = UI.SVG.SUGGESTION;
+	button.innerHTML = UI.SVG.IDEA;
 	button.addEventListener("click", onClick);
 	return button;
 };
@@ -305,7 +305,7 @@ const markCommentaryText = (editableTextArea: Element) => {
 };
 
 /**
- * Handles suggestion button clicks for a comment editor.
+ * Handles idea button clicks for a comment editor.
  * Detects if we're on a messaging thread or a regular post and extracts accordingly.
  */
 const openMessagingPromptModal = () => {
@@ -370,12 +370,12 @@ const openPostPromptModal = (editableTextArea: Element) => {
 	});
 };
 
-const handleSuggestionClick = (editableTextArea: Element) => {
+const handleIdeaClick = (editableTextArea: Element) => {
 	openPostPromptModal(editableTextArea);
 };
 
 /**
- * Adds a suggestion button next to the comment editor.
+ * Adds a idea button next to the comment editor.
  */
 const addIdeaButton = (editableTextArea: Element) => {
 	const panel = isMessagingThread() ? createPresetPanel(editableTextArea) : undefined;
@@ -385,7 +385,7 @@ const addIdeaButton = (editableTextArea: Element) => {
 			panel.style.display = panel.style.display === "none" ? "" : "none";
 			return;
 		}
-		handleSuggestionClick(editableTextArea);
+		handleIdeaClick(editableTextArea);
 	});
 	attachButtonToCommentRow(editableTextArea, button, panel);
 	if (!isMessagingThread()) {

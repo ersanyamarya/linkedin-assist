@@ -1,11 +1,11 @@
 # LinkedIn Assist
 
-A Chrome MV3 extension that adds a suggestion button to LinkedIn comment editors and
+A Chrome MV3 extension that adds a idea button to LinkedIn comment editors and
 message threads, extracting context into a copyable prompt modal. Runs as a content script only.
 
 ## Features
 
-- Injects a suggestion button next to each LinkedIn comment editor
+- Injects a idea button next to each LinkedIn comment editor
 - Extracts post content + visible comments or recent message thread content
 - Collects prompt options (tone/length/intent) before building the final prompt
 - Displays the prompt in a modal with copy-to-clipboard functionality
@@ -18,7 +18,7 @@ The extension runs entirely as a **content script** (no background or popup). He
 
 1. **DOM Observer** (`src/content-scripts/editableTextArea.ts`): Watches `document.body` for DOM mutations
 2. **Comment Detection** (`src/content-scripts/editableTextArea.ts`): Identifies new comment editors via selector and marks them with `data-mutated`
-3. **UI Injection**: Attaches a lightbulb suggestion button to the editor row
+3. **UI Injection**: Attaches a lightbulb idea button to the editor row
 4. **Extraction + Validation**: On click, extracts post content + comments or message thread data and validates with Zod (`src/lib/schemas.ts`)
 5. **Prompt Flow**:
     - **Messaging**: `createMessageReplyModal()` → `buildMessagesPrompt()` → `createTextModal()`

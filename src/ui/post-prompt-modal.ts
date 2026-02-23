@@ -32,7 +32,7 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 		[
 			field("Post", postTextArea, "Read-only extracted text"),
 			commentsList.el,
-			field("Your perspective", thoughtsArea, "Add your viewpoint or context"),
+			field("My perspective (Very important to consider while generating the reply) ", thoughtsArea, "Add your viewpoint or context"),
 			field("Tone", emotionSelect, "Pick the emotional tone"),
 			field("Max length", maxLengthInput, "Leave empty for no limit"),
 			field("Extra instructions", extraInstructionsArea, "Optional guidance"),

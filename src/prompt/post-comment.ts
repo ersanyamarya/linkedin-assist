@@ -17,7 +17,8 @@ const buildCommentsBlock = (selectedComments: readonly string[]): string =>
 		? joinSections(["## Reference comments", selectedComments.map((comment, index) => `- ${index + 1}. ${comment.trim()}`).join("\n")])
 		: joinSections(["## Reference comments", "*(none)*"]);
 
-const buildThoughtsBlock = (yourThoughts: string): string => asFencedBlock("Your perspective", yourThoughts);
+const buildThoughtsBlock = (yourThoughts: string): string =>
+	asFencedBlock("My perspective (Very important to consider while generating the reply) ", yourThoughts);
 
 const buildEmotionBlock = (emotion: string): string =>
 	joinSections([
