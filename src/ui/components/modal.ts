@@ -2,6 +2,7 @@
  * Modal components: backdrop, header, body, footer.
  * Layout: fixed header + scrollable body + fixed footer.
  */
+import { UI } from "../../lib/constants";
 import { el } from "./dom";
 
 const PREFIX = "la-modal";
@@ -16,9 +17,21 @@ export const modalBackdrop = (onClose: () => void): HTMLDivElement => {
 	return backdrop;
 };
 
-/** Modal header (static title area) */
-export const modalHeader = (title: string): HTMLElement =>
-	el("header", { className: `${PREFIX}__header` }, [el("h2", { className: `${PREFIX}__title` }, [title])]);
+/** Icon-only close (×) button, used in the modal header */
+const closeIconButton = (onClose: () => void): HTMLButtonElement => {
+	const button = el("button", {
+		type: "button",
+		className: `${PREFIX}__close`,
+		innerHTML: UI.SVG.CLOSE,
+		"aria-label": "Close",
+	});
+	button.addEventListener("click", onClose);
+	return button;
+};
+
+/** Modal header (static title area) with a close (×) button */
+export const modalHeader = (title: string, onClose?: () => void): HTMLElement =>
+	el("header", { className: `${PREFIX}__header` }, [el("h2", { className: `${PREFIX}__title` }, [title]), ...(onClose ? [closeIconButton(onClose)] : [])]);
 
 /** Modal body (scrollable content area) */
 export const modalBody = (children: (Node | string)[]): HTMLDivElement => el("div", { className: `${PREFIX}__body` }, children);
@@ -27,9 +40,9 @@ export const modalBody = (children: (Node | string)[]): HTMLDivElement => el("di
 export const modalFooter = (children: (Node | string)[]): HTMLElement => el("footer", { className: `${PREFIX}__footer` }, children);
 
 /** Modal container with header/body/footer structure */
-export const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement): HTMLDivElement => {
+export const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement, onClose?: () => void): HTMLDivElement => {
 	const children: HTMLElement[] = [];
-	if (title) children.push(modalHeader(title));
+	if (title) children.push(modalHeader(title, onClose));
 	children.push(body);
 	if (footer) children.push(footer);
 	return el("div", { className: `${PREFIX}__box` }, children);
@@ -59,12 +72,17 @@ type ModalResult = { backdrop: HTMLDivElement; close: () => void };
 
 /** Full modal assembly with header/body/footer layout */
 export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HTMLElement): ModalResult => {
-	const close = () => backdrop.remove();
+	const onKeydown = (e: KeyboardEvent) => e.key === "Escape" && close();
+	const close = () => {
+		backdrop.remove();
+		document.removeEventListener("keydown", onKeydown);
+	};
 	const backdrop = modalBackdrop(close);
 	const body = modalBody(bodyContent);
-	const box = modalBox(title, body, footer);
+	const box = modalBox(title, body, footer, close);
 	backdrop.append(box);
 	document.body.append(backdrop);
+	document.addEventListener("keydown", onKeydown);
 	return { backdrop, close };
 };
 

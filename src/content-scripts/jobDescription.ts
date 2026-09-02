@@ -37,13 +37,35 @@ const getPreferenceText = (): string => {
 
 const getJobDescriptionBody = (): string => {
 	const element = queryFirst(DOM.SELECTORS.JOB_DESCRIPTION_BODY_SELECTORS);
-	if (!element) return "";
-	return ((element as HTMLElement).innerText ?? element.textContent ?? "").trim();
+	if (element) return ((element as HTMLElement).innerText ?? element.textContent ?? "").trim();
+
+	// Structural fallback: LinkedIn sometimes serves the job page with none of the classnames
+	// above (no stable hooks at all beyond the generic rich-text component's test id).
+	const textBoxes = Array.from(document.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX));
+	return textBoxes
+		.map((el) => normalizeWhitespace((el as HTMLElement).innerText ?? el.textContent))
+		.filter((text) => text.length > 0)
+		.join("\n\n");
+};
+
+/**
+ * LinkedIn's <title> reliably follows "{job title} | {company} | LinkedIn", even on job page
+ * variants that expose no other stable hooks for the title/company. Used only as a fallback
+ * when the DOM-based selectors above find nothing.
+ */
+const parseTitleAndCompanyFromDocumentTitle = (): { title: string; company: string } => {
+	const parts = document.title.split(" | ").map(normalizeWhitespace);
+	if (parts.length < 3 || parts.at(-1) !== "LinkedIn") return { title: "", company: "" };
+
+	const company = parts.at(-2) ?? "";
+	const title = parts.slice(0, -2).join(" | ");
+	return { title, company };
 };
 
 const buildJobSnapshot = () => {
-	const title = getTextFromSelectors(DOM.SELECTORS.JOB_TITLE_SELECTORS);
-	const company = getTextFromSelectors(DOM.SELECTORS.JOB_COMPANY_NAME_SELECTORS);
+	const fallback = parseTitleAndCompanyFromDocumentTitle();
+	const title = getTextFromSelectors(DOM.SELECTORS.JOB_TITLE_SELECTORS) || fallback.title;
+	const company = getTextFromSelectors(DOM.SELECTORS.JOB_COMPANY_NAME_SELECTORS) || fallback.company;
 	const details = getTextFromSelectors(DOM.SELECTORS.JOB_PRIMARY_DESCRIPTION_SELECTORS);
 	const preferences = getPreferenceText();
 	const description = getJobDescriptionBody();
@@ -56,8 +78,10 @@ const buildJobSnapshot = () => {
 
 const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 	const button = document.createElement("button");
-	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.IDEA_BUTTON);
+	button.classList.add(UI.CLASSES.IDEA_BUTTON);
 	button.type = "button";
+	button.title = "Generate an idea for this job";
+	button.setAttribute("aria-label", "Generate an idea for this job");
 	button.innerHTML = UI.SVG.IDEA;
 	button.addEventListener("click", onClick);
 	return button;

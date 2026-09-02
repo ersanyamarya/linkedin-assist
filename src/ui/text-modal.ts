@@ -11,7 +11,7 @@ export const createTextModal = (text: string): void => {
 			className: "la-modal__content la-textarea",
 			readOnly: true,
 			value: normalizedText,
-			style: "min-height:420px;font-size:14px;line-height:1.5;color:#333",
+			style: "min-height:420px;font-size:14px;line-height:1.5",
 		},
 		[]
 	);
@@ -22,12 +22,19 @@ export const createTextModal = (text: string): void => {
 	const footer = modalFooter([el("div", { className: "la-modal__actions" }, [closeBtn, copyBtn])]);
 
 	const { close } = showModal("Generated Prompt", [content], footer);
+	content.focus();
+	content.select();
 
+	const copyLabel = copyBtn.textContent ?? "Copy";
 	copyBtn.addEventListener("click", async () => {
 		try {
 			await navigator.clipboard.writeText(normalizedText);
 			copyBtn.textContent = "Copied!";
-			setTimeout(close, 500);
+			copyBtn.disabled = true;
+			setTimeout(() => {
+				copyBtn.textContent = copyLabel;
+				copyBtn.disabled = false;
+			}, 1500);
 		} catch (err) {
 			console.error("Failed to copy:", err);
 		}

@@ -17,6 +17,9 @@ export const el = <K extends keyof HTMLElementTagNameMap>(
 			element.className = value;
 		} else if (key.startsWith("on") && typeof value === "function") {
 			element.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
+		} else if (key.includes("-") && (typeof value === "string" || typeof value === "number")) {
+			// Hyphenated keys (aria-*, data-*) aren't real JS properties; they need setAttribute.
+			element.setAttribute(key, String(value));
 		} else if (value !== undefined && value !== null) {
 			(element as Record<string, unknown>)[key] = value;
 		}

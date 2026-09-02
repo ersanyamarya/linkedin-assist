@@ -261,8 +261,10 @@ const extractMessagingThreadDetails = (): {
  */
 const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 	const button = document.createElement("button");
-	button.classList.add(...UI.CLASSES.BUTTON_DEFAULTS, UI.CLASSES.IDEA_BUTTON);
+	button.classList.add(UI.CLASSES.IDEA_BUTTON);
 	button.type = "button";
+	button.title = "Generate a reply idea";
+	button.setAttribute("aria-label", "Generate a reply idea");
 	button.innerHTML = UI.SVG.IDEA;
 	button.addEventListener("click", onClick);
 	return button;

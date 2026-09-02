@@ -9,15 +9,41 @@
 :root {
 	--la-primary: #0a66c2;
 	--la-primary-hover: #084fa3;
+	--la-primary-tint: rgba(10, 102, 194, 0.12);
+	--la-primary-contrast: #fff;
 	--la-text: #111;
 	--la-text-muted: #666;
+	--la-icon: #56687a;
 	--la-bg: #fff;
 	--la-bg-muted: #fafafa;
+	--la-bg-hover: #f0f0f0;
 	--la-border: #d0d0d0;
 	--la-border-light: #e2e2e2;
 	--la-radius: 6px;
 	--la-radius-lg: 8px;
 	--la-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+	color-scheme: light;
+}
+
+/* Our modal is a self-contained overlay, independent of LinkedIn's own theme, so it follows
+   the OS-level color scheme rather than trying to detect LinkedIn's (unstable) theme markup. */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--la-primary: #6bb1ff;
+		--la-primary-hover: #8fc4ff;
+		--la-primary-tint: rgba(107, 177, 255, 0.16);
+		--la-primary-contrast: #0b1720;
+		--la-text: #e9edf1;
+		--la-text-muted: #9aa7b2;
+		--la-icon: #9aa7b2;
+		--la-bg: #1b2226;
+		--la-bg-muted: #242c31;
+		--la-bg-hover: #2b343a;
+		--la-border: #3a444a;
+		--la-border-light: #333c42;
+		--la-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+		color-scheme: dark;
+	}
 }
 
 /* --------------------------------------------------------------------------
@@ -34,12 +60,44 @@
 }
 
 .linkedin-assist__idea-button {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
 	align-self: center;
-	padding: 1px;
-	margin-left: 8px;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	margin-left: 4px;
+	color: var(--la-icon);
 	cursor: pointer;
 	background: transparent;
 	border: none;
+	border-radius: 50%;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease;
+}
+
+.linkedin-assist__idea-button svg {
+	width: 18px;
+	height: 18px;
+	pointer-events: none;
+}
+
+.linkedin-assist__idea-button:hover {
+	color: var(--la-primary);
+	background: var(--la-primary-tint);
+}
+
+.linkedin-assist__idea-button:active {
+	transform: scale(0.9);
+}
+
+.linkedin-assist__idea-button:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 1px;
 }
 
 .linkedin-assist__quick-actions {
@@ -67,12 +125,12 @@
 }
 
 .linkedin-assist__preset-item:hover {
-	background: #f0f0f0;
+	background: var(--la-bg-hover);
 }
 
 .linkedin-assist__preset-item--advanced {
 	color: var(--la-primary);
-	background: #eef5ff;
+	background: var(--la-primary-tint);
 	border-color: var(--la-primary);
 }
 
@@ -93,6 +151,7 @@
 	align-items: center;
 	justify-content: center;
 	background: rgba(0, 0, 0, 0.5);
+	animation: la-fade-in 0.14s ease-out;
 }
 
 .la-modal__box {
@@ -101,16 +160,54 @@
 	width: min(92vw, 680px);
 	max-height: 80vh;
 	overflow: hidden;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+		sans-serif;
+	color: var(--la-text);
 	background: var(--la-bg);
 	border-radius: var(--la-radius-lg);
 	box-shadow: var(--la-shadow);
+	animation: la-modal-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes la-fade-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes la-modal-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96) translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.la-modal,
+	.la-modal__box {
+		animation: none;
+	}
 }
 
 /* --------------------------------------------------------------------------
    Modal — Header (static)
    -------------------------------------------------------------------------- */
 .la-modal__header {
+	display: flex;
 	flex-shrink: 0;
+	gap: 12px;
+	align-items: flex-start;
+	justify-content: space-between;
 	padding: 20px 24px 16px;
 	border-bottom: 1px solid var(--la-border-light);
 }
@@ -120,6 +217,34 @@
 	font-size: 18px;
 	font-weight: 600;
 	color: var(--la-text);
+}
+
+.la-modal__close {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	color: var(--la-text-muted);
+	cursor: pointer;
+	background: transparent;
+	border: none;
+	border-radius: 50%;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.la-modal__close:hover {
+	color: var(--la-text);
+	background: var(--la-bg-muted);
+}
+
+.la-modal__close:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 1px;
 }
 
 /* --------------------------------------------------------------------------
@@ -164,7 +289,7 @@
 .la-label {
 	font-size: 13px;
 	font-weight: 600;
-	color: #222;
+	color: var(--la-text);
 }
 
 .la-hint {
@@ -178,13 +303,30 @@
 	width: 100%;
 	padding: 8px 10px;
 	font-size: 13px;
+	color: var(--la-text);
+	background: var(--la-bg);
 	border: 1px solid var(--la-border);
 	border-radius: var(--la-radius);
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.la-input:focus,
+.la-textarea:focus,
+.la-select:focus {
+	outline: none;
+	border-color: var(--la-primary);
+	box-shadow: 0 0 0 3px var(--la-primary-tint);
 }
 
 .la-textarea {
 	min-height: 90px;
 	resize: vertical;
+}
+
+.la-textarea[readonly] {
+	background: var(--la-bg-muted);
 }
 
 /* --------------------------------------------------------------------------
@@ -217,7 +359,7 @@
 	gap: 6px;
 	align-items: flex-start;
 	font-size: 13px;
-	color: #333;
+	color: var(--la-text);
 	cursor: pointer;
 }
 
@@ -279,11 +421,18 @@
 	cursor: pointer;
 	border: none;
 	border-radius: 4px;
-	transition: background 0.2s;
+	transition:
+		background 0.2s,
+		opacity 0.15s;
+}
+
+.la-btn:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
 }
 
 .la-btn--primary {
-	color: #fff;
+	color: var(--la-primary-contrast);
 	background: var(--la-primary);
 }
 
@@ -291,13 +440,19 @@
 	background: var(--la-primary-hover);
 }
 
+.la-btn--primary:disabled {
+	cursor: default;
+	opacity: 0.6;
+}
+
 .la-btn--secondary {
-	color: #333;
-	background: #e8e8e8;
+	color: var(--la-text);
+	background: var(--la-bg-muted);
+	border: 1px solid var(--la-border-light);
 }
 
 .la-btn--secondary:hover {
-	background: #d0d0d0;
+	background: var(--la-bg-hover);
 }
 
 /* --------------------------------------------------------------------------
