@@ -1,0 +1,56 @@
+{
+  "sandbox": {
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "raw.githubusercontent.com",
+        "api.github.com"
+      ]
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "context-mode hook vscode-copilot pretooluse"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "context-mode hook vscode-copilot posttooluse"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "context-mode hook vscode-copilot sessionstart"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run format"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": ["Bash(bun run format)"]
+  }
+}

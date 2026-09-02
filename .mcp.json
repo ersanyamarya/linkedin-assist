@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "context-mode": {
+      "command": "context-mode"
+    },
+    "context7": {
+      "command": "context7-mcp",
+      "args": ["--api-key", "ctx7sk-48946159-7552-450b-b0a2-69d48de0dca6"]
+    },
+    "fallow": {
+      "command": "fallow-mcp"
+    },
+    "playwright-chrome": {
+      "command": "playwright-mcp",
+      "args": ["--browser", "chrome", "--output-dir", ".playwright-mcp"]
+    },
+    "internet-search": {
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
+      "type": "http"
+    }
+  }
+}

@@ -38,20 +38,43 @@ const findFeedContainer = (editableTextArea: Element): Element | null => {
 };
 
 /**
+ * Finds the expandable-text-box elements that belong to the post itself, excluding
+ * any that live inside the comment list. Used as a fallback when LinkedIn serves a
+ * feed variant without any `data-view-name` attributes (so FEED_COMMENTARY and
+ * COMMENT_COMMENTARY can't be found at all).
+ */
+const findPostExpandableTextBoxes = (container: Element): Element[] => {
+	const commentList = container.querySelector(DOM.SELECTORS.POST_COMMENT_LIST);
+	return Array.from(container.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX)).filter((el) => !(commentList && commentList.contains(el)));
+};
+
+/**
  * Finds the commentary text element for the feed item containing the editor.
  * Works on both feed list and single post pages.
  */
 const findCommentaryTextElement = (editableTextArea: Element): Element | null => {
-	const container = findFeedContainer(editableTextArea);
+	// Try to locate the feed container first (list view or single post).
+	let container = findFeedContainer(editableTextArea);
+
+	// If not found, fallback to the article container used on full post pages.
+	if (!container) {
+		container = document.querySelector(DOM.SELECTORS.POST_ARTICLE_CONTAINER) as Element | null;
+	}
 	if (!container) return null;
 
+	// Feed commentary (main post text) within the container.
 	const commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
 	if (commentary) {
 		return commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary;
 	}
 
+	// Alternate selector for post page commentary.
 	const postCommentary = container.querySelector(DOM.SELECTORS.POST_COMMENTARY);
 	if (postCommentary) return postCommentary;
+
+	// Structural fallback for the no-data-view-name feed variant.
+	const [firstPostTextBox] = findPostExpandableTextBoxes(container);
+	if (firstPostTextBox) return firstPostTextBox;
 
 	return null;
 };
@@ -78,13 +101,24 @@ const extractPostComments = (editableTextArea: Element): string[] => {
 		return commentaries.map(extractCommentaryText).filter((comment) => comment.length > 0);
 	}
 
-	const singlePostComments = Array.from(document.querySelectorAll(DOM.SELECTORS.SINGLE_POST_COMMENT));
+	const singlePostComments = Array.from(container.querySelectorAll(DOM.SELECTORS.SINGLE_POST_COMMENT));
 
-	return singlePostComments
-		.map((article) => {
-			const contentDiv = article.querySelector(DOM.SELECTORS.SINGLE_POST_COMMENT_CONTENT);
-			return contentDiv?.textContent?.trim() ?? "";
-		})
+	if (singlePostComments.length > 0) {
+		return singlePostComments
+			.map((article) => {
+				const contentDiv = article.querySelector(DOM.SELECTORS.SINGLE_POST_COMMENT_CONTENT);
+				return contentDiv?.textContent?.trim() ?? "";
+			})
+			.filter((comment) => comment.length > 0);
+	}
+
+	// Structural fallback for the no-data-view-name feed variant: every expandable-text-box
+	// inside the comment list wrapper is a comment (or reply).
+	const commentList = container.querySelector(DOM.SELECTORS.POST_COMMENT_LIST);
+	if (!commentList) return [];
+
+	return Array.from(commentList.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX))
+		.map(extractCommentaryText)
 		.filter((comment) => comment.length > 0);
 };
 
@@ -96,13 +130,8 @@ const extractPostContent = (editableTextArea: Element): string => {
 	const commentaryTextElement = findCommentaryTextElement(editableTextArea);
 	if (!commentaryTextElement) return "";
 
-	if (commentaryTextElement.classList.contains("update-components-update-v2__commentary")) {
-		const postText = commentaryTextElement.textContent ?? "";
-		return postText.trim();
-	}
-
-	const postText = commentaryTextElement.textContent ?? "";
-	return postText.trim();
+	// Directly return trimmed text content of the found element.
+	return (commentaryTextElement.textContent ?? "").trim();
 };
 
 /**

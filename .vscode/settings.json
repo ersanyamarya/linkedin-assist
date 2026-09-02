@@ -50,5 +50,12 @@
     "source.fixAll.biome": "explicit",
     "source.organizeImports.biome": "explicit"
   },
-  "cSpell.words": ["ultracite"]
+  "cSpell.words": ["ultracite"],
+  "chat.tools.terminal.autoApprove": {
+    "mkdir": true,
+    "bun": true
+  },
+  "sessions.chatTimeline.display": "ruler",
+  "chat.agentSessions.showExternal": "recent",
+  "chat.stickyScroll.enabled": true
 }

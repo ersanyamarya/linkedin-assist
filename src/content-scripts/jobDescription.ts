@@ -1,10 +1,22 @@
 import { DOM, UI } from "../lib";
 import { createTextModal } from "../ui";
 
-const observer = new MutationObserver(() => {
-	const saveButtons = Array.from(document.querySelectorAll(DOM.SELECTORS.JOB_SAVE_BUTTON)).filter((button) => !button.hasAttribute(DOM.ATTR.DATA_JOB_IDEA));
+// Tries each selector in order; returns the first element found.
+const queryFirst = (selectors: readonly string[]): Element | null => {
+	for (const selector of selectors) {
+		const el = document.querySelector(selector);
+		if (el) return el;
+	}
+	return null;
+};
 
-	for (const saveButton of saveButtons) {
+const findSaveButtons = (): Element[] =>
+	DOM.SELECTORS.JOB_SAVE_BUTTON_FALLBACKS.flatMap((selector) =>
+		Array.from(document.querySelectorAll(selector)).filter((el) => !el.hasAttribute(DOM.ATTR.DATA_JOB_IDEA))
+	).filter((el, i, arr) => arr.indexOf(el) === i); // deduplicate
+
+const observer = new MutationObserver(() => {
+	for (const saveButton of findSaveButtons()) {
 		attachIdeaButton(saveButton);
 	}
 });
@@ -13,10 +25,7 @@ observer.observe(document.body, { childList: true, subtree: true });
 
 const normalizeWhitespace = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
 
-const getTextContent = (selector: string): string => {
-	const element = document.querySelector(selector);
-	return normalizeWhitespace(element?.textContent);
-};
+const getTextFromSelectors = (selectors: readonly string[]): string => normalizeWhitespace(queryFirst(selectors)?.textContent);
 
 const getPreferenceText = (): string => {
 	const buttons = Array.from(document.querySelectorAll(DOM.SELECTORS.JOB_PREFERENCES));
@@ -27,41 +36,20 @@ const getPreferenceText = (): string => {
 };
 
 const getJobDescriptionBody = (): string => {
-	const element = document.querySelector(DOM.SELECTORS.JOB_DESCRIPTION_BODY) ?? document.querySelector(DOM.SELECTORS.JOB_DESCRIPTION_BODY_FALLBACK);
+	const element = queryFirst(DOM.SELECTORS.JOB_DESCRIPTION_BODY_SELECTORS);
 	if (!element) return "";
-
-	const text = (element as HTMLElement).innerText ?? element.textContent ?? "";
-	return text.trim();
+	return ((element as HTMLElement).innerText ?? element.textContent ?? "").trim();
 };
 
-// const buildMetadataSection = (items: ReadonlyArray<{ label: string; value: string }>): string => {
-// 	const lines = items.map((item) => (item.value ? `${item.label}: ${item.value}` : "")).filter((line) => line.length > 0);
-
-// 	if (lines.length === 0) return "";
-// 	return `Metadata:\n${lines.join("\n")}`;
-// };
-
 const buildJobSnapshot = () => {
-	const title = getTextContent(DOM.SELECTORS.JOB_TITLE);
-	const company = getTextContent(DOM.SELECTORS.JOB_COMPANY_NAME);
-	const details = getTextContent(DOM.SELECTORS.JOB_PRIMARY_DESCRIPTION);
+	const title = getTextFromSelectors(DOM.SELECTORS.JOB_TITLE_SELECTORS);
+	const company = getTextFromSelectors(DOM.SELECTORS.JOB_COMPANY_NAME_SELECTORS);
+	const details = getTextFromSelectors(DOM.SELECTORS.JOB_PRIMARY_DESCRIPTION_SELECTORS);
 	const preferences = getPreferenceText();
 	const description = getJobDescriptionBody();
 
-	// const metadata = buildMetadataSection([
-	// 	{ label: "Title", value: title },
-	// 	{ label: "Company", value: company },
-	// 	{ label: "Details", value: details },
-	// 	{ label: "Preferences", value: preferences },
-	// ]);
-
 	return {
-		metadata: {
-			title,
-			company,
-			details,
-			preferences,
-		},
+		metadata: { title, company, details, preferences },
 		description,
 	};
 };
@@ -77,14 +65,24 @@ const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 
 const showJobModal = () => {
 	const snapshot = buildJobSnapshot();
-	if (!snapshot) {
-		alert("Could not extract job details.");
-		return;
-	}
-	// const sections = [snapshot.metadata, snapshot.description ? `Description:\n${snapshot.description}` : ""].filter((section) => section.length > 0);
-	// const snapshotText = sections.join("\n\n");
-
 	createTextModal(JSON.stringify(snapshot, null, 2));
+};
+
+/**
+ * Finds the element to insert the idea button after.
+ * LinkedIn sometimes wraps the save button in a `display: grid` container sized for its
+ * existing children only; adding a sibling there makes the grid overlap it on top of the
+ * save button instead of laying out beside it. Walk out of any such grid ancestor so the
+ * idea button renders in normal flow next to the button group instead of inside it.
+ */
+const findInsertionAnchor = (saveButton: HTMLElement): Element => {
+	let anchor: Element = saveButton;
+	let parent = anchor.parentElement;
+	while (parent && getComputedStyle(parent).display === "grid") {
+		anchor = parent;
+		parent = anchor.parentElement;
+	}
+	return anchor;
 };
 
 const attachIdeaButton = (saveButton: Element) => {
@@ -93,5 +91,5 @@ const attachIdeaButton = (saveButton: Element) => {
 
 	saveButton.setAttribute(DOM.ATTR.DATA_JOB_IDEA, "true");
 	const ideaButton = createIdeaButton(showJobModal);
-	saveButton.insertAdjacentElement("afterend", ideaButton);
+	findInsertionAnchor(saveButton).insertAdjacentElement("afterend", ideaButton);
 };
