@@ -46,7 +46,7 @@ export const radio = (name: string, value: string, label: string, checked = fals
 	return { el: el("label", { className: "la-checkbox-row", htmlFor: id }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
 };
 
-/** Checkbox list inside fieldset */
+/** Checkbox list inside fieldset, with a bulk select-all/clear affordance once there's more than one item */
 export const checkboxList = (legend: string, items: readonly string[], hint?: string): { el: HTMLFieldSetElement; getSelected: () => string[] } => {
 	if (items.length === 0) {
 		const fs = fieldset(legend, [el("em", { className: "la-hint" }, ["(none)"])], "la-list");
@@ -58,26 +58,47 @@ export const checkboxList = (legend: string, items: readonly string[], hint?: st
 		return { input: cb.input, value: item, row: cb.el };
 	});
 
-	const content: Node[] = boxes.map((b) => b.row);
+	const legendRow: Node[] = [el("span", {}, [`${legend} (${items.length})`])];
+	if (items.length > 1) {
+		const setAll = (checked: boolean) => {
+			for (const b of boxes) b.input.checked = checked;
+		};
+		const selectAllBtn = el("button", { type: "button", className: "la-list__action" }, ["Select all"]);
+		selectAllBtn.addEventListener("click", () => setAll(true));
+		const clearBtn = el("button", { type: "button", className: "la-list__action" }, ["Clear"]);
+		clearBtn.addEventListener("click", () => setAll(false));
+		legendRow.push(el("div", { className: "la-list__actions" }, [selectAllBtn, clearBtn]));
+	}
+
+	const content: Node[] = [el("div", { className: "la-list__legend-row" }, legendRow), ...boxes.map((b) => b.row)];
 	if (hint) content.push(el("small", { className: "la-hint" }, [hint]));
 
-	const fs = fieldset(legend, content, "la-list");
+	const fs = el("fieldset", { className: "la-list" }, content);
 	return { el: fs, getSelected: () => boxes.filter((b) => b.input.checked).map((b) => b.value) };
 };
 
-/** Radio group inside fieldset */
+/** Segmented (pill) toggle for a small set of mutually exclusive options */
 export const radioGroup = <T extends string>(
 	legend: string,
 	options: readonly { value: T; label: string }[],
 	defaultValue: T
 ): { el: HTMLFieldSetElement; getValue: () => T } => {
 	const name = `la-radio-${Date.now()}`;
-	const radios = options.map((opt) => radio(name, opt.value, opt.label, opt.value === defaultValue));
-	const fs = fieldset(
-		legend,
-		radios.map((r) => r.el),
-		"la-list"
-	);
+	const radios = options.map((opt) => {
+		const input = el("input", { type: "radio", name, value: opt.value, checked: opt.value === defaultValue, className: "la-segmented__input" });
+		const option = el("label", { className: "la-segmented__option" }, [input, el("span", {}, [opt.label])]);
+		return { input, option };
+	});
+
+	const fs = el("fieldset", { className: "la-segmented" }, [
+		el("legend", { className: "la-label" }, [legend]),
+		el(
+			"div",
+			{ className: "la-segmented__track" },
+			radios.map((r) => r.option)
+		),
+	]);
+
 	return { el: fs, getValue: () => (radios.find((r) => r.input.checked)?.input.value as T) ?? defaultValue };
 };
 

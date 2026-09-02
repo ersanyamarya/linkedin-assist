@@ -3,7 +3,7 @@
  */
 import { btn, el, modalFooter, showModal } from "./components";
 
-export const createTextModal = (text: string): void => {
+export const createTextModal = (text: string, title = "Generated Prompt"): void => {
 	const normalizedText = text.replace(/\n{3,}/g, "\n\n");
 	const content = el(
 		"textarea",
@@ -21,7 +21,7 @@ export const createTextModal = (text: string): void => {
 
 	const footer = modalFooter([el("div", { className: "la-modal__actions" }, [closeBtn, copyBtn])]);
 
-	const { close } = showModal("Generated Prompt", [content], footer);
+	const { close } = showModal(title, [content], footer);
 	content.focus();
 	content.select();
 

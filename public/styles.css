@@ -351,6 +351,97 @@
 	font-weight: 600;
 }
 
+.la-list__legend-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 4px 2px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--la-text);
+}
+
+.la-list__actions {
+	display: flex;
+	flex-shrink: 0;
+	gap: 10px;
+}
+
+.la-list__action {
+	padding: 0;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--la-primary);
+	cursor: pointer;
+	background: none;
+	border: none;
+}
+
+.la-list__action:hover {
+	text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Segmented control (pill toggle) — for a small set of mutually exclusive options
+   -------------------------------------------------------------------------- */
+.la-segmented {
+	padding: 0;
+	margin: 0;
+	border: none;
+}
+
+.la-segmented > legend {
+	padding: 0;
+	margin-bottom: 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.la-segmented__track {
+	display: flex;
+	gap: 2px;
+	padding: 3px;
+	background: var(--la-bg-muted);
+	border: 1px solid var(--la-border-light);
+	border-radius: 999px;
+}
+
+.la-segmented__option {
+	position: relative;
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	padding: 6px 12px;
+	font-size: 13px;
+	color: var(--la-text-muted);
+	text-align: center;
+	cursor: pointer;
+	border-radius: 999px;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.la-segmented__input {
+	position: absolute;
+	pointer-events: none;
+	opacity: 0;
+}
+
+.la-segmented__option:has(.la-segmented__input:checked) {
+	font-weight: 600;
+	color: var(--la-primary);
+	background: var(--la-bg);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.la-segmented__option:has(.la-segmented__input:focus-visible) {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
+}
+
 /* --------------------------------------------------------------------------
    Checkbox & Radio Rows
    -------------------------------------------------------------------------- */

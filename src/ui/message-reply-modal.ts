@@ -136,6 +136,8 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	const ctaSection = field("Call-to-action", ctaCheckbox.el, "Optional: Add a clear next step");
 	const instructionsSection = field("Extra instructions", extraInstructions, "Optional: Additional LLM guidance");
 
+	const submitLabelForMode = (mode: MessageReplyMode): string => (mode === "preset" ? "Use this reply" : "Generate prompt");
+
 	// Visibility toggle
 	const updateVisibility = () => {
 		const isPreset = modeGroup.getValue() === "preset";
@@ -144,6 +146,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		promptOptionsRow.style.display = isPreset ? "none" : "";
 		ctaSection.style.display = isPreset ? "none" : "";
 		instructionsSection.style.display = isPreset ? "none" : "";
+		submitBtn.textContent = submitLabelForMode(modeGroup.getValue());
 	};
 
 	// Update preview
@@ -163,7 +166,6 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	modeGroup.el.addEventListener("change", updateVisibility);
 
 	// Initialize
-	updateVisibility();
 	updatePreview();
 
 	let closeModal: () => void = () => {};
@@ -205,7 +207,10 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		}
 	);
 
-	const footer = modalFooter([modalButtons("Cancel", "Continue", () => closeModal(), form.id)]);
+	const footer = modalFooter([modalButtons("Cancel", submitLabelForMode(modeGroup.getValue()), () => closeModal(), form.id)]);
+	const submitBtn = footer.querySelector('button[type="submit"]') as HTMLButtonElement;
+	updateVisibility();
+
 	const { close } = showModal("Reply to LinkedIn message", [form], footer);
 	closeModal = close;
 };

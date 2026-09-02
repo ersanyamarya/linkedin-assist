@@ -365,7 +365,7 @@ const openMessagingPromptModal = () => {
 		data: parsed.data,
 		buildPrompt: buildMessagesPrompt,
 		onSubmit: (result) => {
-			createTextModal(result.text);
+			createTextModal(result.text, result.mode === "preset" ? "Your Reply" : "Generated Prompt");
 		},
 	});
 };
