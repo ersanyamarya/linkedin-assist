@@ -29,30 +29,32 @@ export const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
 	{
 		id: "nohelp",
 		label: "No help needed",
-		template: `Hello {name},\n\nThanks for connecting!\n\nWhile I don't currently have an immediate need for your services, I'll keep your information in mind should anything change.\n\n${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nThanks for reaching out. I don't need this right now, but I'll keep your info handy if that changes.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "nohire",
 		label: "Not hiring",
-		template: `Hi {name},\n\nThanks for connecting!\n\nWhile we're not actively hiring currently, I'll be sure to reach out if our needs evolve.\n\n${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nAppreciate you thinking of us. We're not hiring at the moment, but I'll reach out the second that shifts.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "connect",
 		label: "Happy to connect",
-		template: `Hi {name},\n\nI am happy to connect with you. Looking forward to our interactions.\n\n${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nGood to connect. Looking forward to seeing what you're up to.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "reject",
 		label: "Not seeking opportunities",
-		template: `Hi {name},\n\nThanks for reaching out! While I'm not actively seeking new opportunities right now, I'll be sure to reach out if that changes.\n\n${SIGNATURE_REGARDS}`,
+		template: `Hi {name},\n\nThanks for the note. I'm not looking right now, but I'll keep you in mind if that changes.\n\n${SIGNATURE_REGARDS}`,
 	},
 	{
 		id: "notyet",
 		label: "Not yet",
-		template: `Hi {name}, \n\nThank you for your interest.\n\nWe're currently focused on existing priorities, but feel free to check back in a few months.\n\n${
-			/* `SIGNATURE_BEST` is a constant string that contains a signature typically used at the end of a message. In this case, it includes the closing "Best," followed by the name "Sanyam". It is used as part of the message templates in the `MESSAGE_REPLY_PRESETS` array to provide a consistent signature for certain types of replies. */
-			SIGNATURE_BEST
-		}`,
+		template: `Hi {name},\n\nThanks for your patience. We're heads-down on other priorities right now, so check back in a couple months.\n\n${SIGNATURE_BEST}`,
+	},
+	{
+		id: "nopermanent",
+		label: "Polite no, permanently",
+		template: `Hi {name},\n\nThanks for thinking of me, but this isn't something I'm looking for. Best of luck.\n\n${SIGNATURE_REGARDS}`,
 	},
 ];
 
