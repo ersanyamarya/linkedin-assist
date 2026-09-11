@@ -17,6 +17,10 @@
     "internet-search": {
       "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
       "type": "http"
+    },
+    "graft": {
+      "command": "graft",
+      "args": ["mcp"]
     }
   }
 }
