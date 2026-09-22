@@ -22,6 +22,11 @@ export const DOM = {
 		POST_ARTICLE_CONTAINER: "article.update-components-article",
 		SINGLE_POST_COMMENT: "article.comments-comment-entity",
 		SINGLE_POST_COMMENT_CONTENT: ".comments-comment-entity__content",
+		// LinkedIn's social counts row (reactions / comments / reposts, shown just above the
+		// Like/Comment/Repost/Send action bar) is rendered with fully hashed, build-specific class
+		// names and no aria-label or data-* hooks at all, so it can't be targeted with a CSS
+		// selector. It's located structurally instead — see `REACTION_COUNT_TEXT_PATTERN` in
+		// editableTextArea.ts, which matches the reaction-count text itself (e.g. "376 reactions").
 		// Messaging thread selectors
 		MESSAGING_THREAD_CONTAINER: ".msg-thread",
 		MESSAGING_THREAD_PARTNER_NAME: ".msg-thread__link-to-profile h2",
@@ -67,6 +72,7 @@ export const DOM = {
 	ATTR: {
 		DATA_MUTATED: "data-mutated",
 		DATA_JOB_IDEA: "data-la-job-idea",
+		DATA_REPOST_IDEA: "data-la-repost-idea",
 	},
 };
 
@@ -97,6 +103,7 @@ export const UI = {
 		CLOSE_BUTTON: "Close",
 		GENERATE_BUTTON: "Generate prompt",
 		CANCEL_BUTTON: "Cancel",
+		REPOST_IDEA_BUTTON: "Draft a repost with your thoughts",
 	},
 };
 

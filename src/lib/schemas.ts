@@ -13,6 +13,17 @@ export const PostCommentsSchema = z
 export type PostComments = z.infer<typeof PostCommentsSchema>;
 
 /**
+ * A post being reposted, extracted from LinkedIn's feed or single-post page.
+ */
+export const RepostSchema = z
+	.object({
+		postText: z.string(),
+	})
+	.strict();
+
+export type Repost = z.infer<typeof RepostSchema>;
+
+/**
  * A single message event in a messaging thread.
  */
 export const MessageSchema = z
@@ -53,6 +64,18 @@ export const CommentPromptOptionsSchema = z
 	.strict();
 
 export type CommentPromptOptions = z.infer<typeof CommentPromptOptionsSchema>;
+
+export const RepostPromptOptionsSchema = z
+	.object({
+		postText: z.string(),
+		yourThoughts: z.string(),
+		emotion: EmotionsSchema,
+		maxLengthWords: z.number().optional(),
+		extraInstructions: z.string().optional(),
+	})
+	.strict();
+
+export type RepostPromptOptions = z.infer<typeof RepostPromptOptionsSchema>;
 
 export const ALLOWED_TONES = ["friendly", "professional", "casual", "direct", "warm"] as const;
 export const TonesSchema = z.enum(ALLOWED_TONES);
