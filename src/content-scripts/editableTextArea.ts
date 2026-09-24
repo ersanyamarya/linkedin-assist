@@ -2,12 +2,12 @@ import type { CommentPromptOptions, RepostPromptOptions } from "../lib";
 import { DOM, ensureEnterToSend, MessagesSchema, PostCommentsSchema, RepostSchema, setEditableText, UI } from "../lib";
 import { buildLinkedInCommentPrompt, buildLinkedInRepostPrompt, buildMessagesPrompt } from "../prompt";
 import {
-	applyMessageTemplate,
 	createMessageReplyModal,
 	createPostCommentPromptModal,
+	createQuickRepliesPanel,
 	createRepostPromptModal,
 	createTextModal,
-	MESSAGE_REPLY_PRESETS,
+	type QuickRepliesPanel,
 } from "../ui";
 
 // const randomLightHexColor = (): string => {
@@ -159,8 +159,6 @@ const extractPostDetails = (anchor: Element): { postText: string; comments: stri
 
 const normalizeWhitespace = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
 
-const ADVANCED_PRESET_LABEL = "Advance";
-
 const isOnMessagingThreadRoute = (): boolean => window.location.pathname.startsWith("/messaging/thread/");
 
 /**
@@ -175,8 +173,9 @@ const isMessagingThread = (): boolean => {
  * Extracts the sender name from a messaging thread.
  * Returns the name of the other participant.
  */
-const extractSenderName = (): string => {
-	const threadContainer = document.querySelector(DOM.SELECTORS.MESSAGING_THREAD_CONTAINER);
+const extractSenderName = (scope?: Element): string => {
+	// Prefer the thread that contains the editor, so the right name is used when several chat pop-ups are open.
+	const threadContainer = scope?.closest(DOM.SELECTORS.MESSAGING_THREAD_CONTAINER) ?? document.querySelector(DOM.SELECTORS.MESSAGING_THREAD_CONTAINER);
 	if (!threadContainer) return "";
 
 	const partnerHeading = threadContainer.querySelector(DOM.SELECTORS.MESSAGING_THREAD_PARTNER_NAME);
@@ -284,53 +283,16 @@ const createIdeaButton = (onClick: () => void, label = "Generate a reply idea"):
 	return button;
 };
 
-const createPresetPanel = (editableTextArea: Element): HTMLDivElement => {
-	const panel = document.createElement("div");
-	panel.classList.add(UI.CLASSES.PRESET_PANEL);
-	panel.style.display = "none";
-
-	const recipientName = extractSenderName();
-
-	const presetButtons = MESSAGE_REPLY_PRESETS.map((preset) => {
-		const button = document.createElement("button");
-		button.type = "button";
-		button.classList.add(UI.CLASSES.PRESET_ITEM);
-		button.textContent = preset.label;
-		button.addEventListener("click", () => {
-			const message = applyMessageTemplate(preset.template, recipientName);
-			setEditableText(editableTextArea, message);
-			panel.style.display = "none";
-		});
-		return button;
-	});
-
-	const advancedButton = document.createElement("button");
-	advancedButton.type = "button";
-	advancedButton.classList.add(UI.CLASSES.PRESET_ITEM, UI.CLASSES.PRESET_ITEM_ADVANCED);
-	advancedButton.textContent = ADVANCED_PRESET_LABEL;
-	advancedButton.addEventListener("click", () => {
-		panel.style.display = "none";
-		openMessagingPromptModal(editableTextArea);
-	});
-
-	for (const button of [...presetButtons, advancedButton]) {
-		panel.appendChild(button);
-	}
-
-	return panel;
-};
-
 /**
  * Adds comment-row styling and button to the editor row.
  */
-const attachButtonToCommentRow = (editableTextArea: Element, button: HTMLButtonElement, panel?: HTMLDivElement) => {
+const attachButtonToCommentRow = (editableTextArea: Element, button: HTMLButtonElement) => {
 	const parent = editableTextArea.parentElement;
 	if (!parent) return;
 
 	const actions = document.createElement("div");
 	actions.classList.add(UI.CLASSES.QUICK_ACTIONS);
 	actions.appendChild(button);
-	if (panel) actions.appendChild(panel);
 	parent.appendChild(actions);
 
 	parent.classList.add(UI.CLASSES.COMMENT_ROW);
@@ -510,20 +472,37 @@ const attachRepostIdeaButton = (anchor: Element) => {
 };
 
 /**
- * Adds a idea button next to the comment editor.
+ * Adds a idea button next to the comment editor. In messaging (the Messaging page and chat
+ * pop-ups) it opens the quick-replies panel; elsewhere it starts the comment prompt flow.
  */
 const addIdeaButton = (editableTextArea: Element) => {
-	const panel = isMessagingThread() ? createPresetPanel(editableTextArea) : undefined;
-	if (panel) ensureEnterToSend(editableTextArea as HTMLElement);
-	const button = createIdeaButton(() => {
-		if (panel) {
-			panel.style.display = panel.style.display === "none" ? "" : "none";
-			return;
-		}
-		handleIdeaClick(editableTextArea);
-	});
-	attachButtonToCommentRow(editableTextArea, button, panel);
-	if (!isMessagingThread()) {
+	const isMessaging = isMessagingThread();
+	let quickReplies: QuickRepliesPanel | undefined;
+
+	const button = createIdeaButton(
+		() => {
+			if (quickReplies) {
+				quickReplies.toggle();
+				return;
+			}
+			handleIdeaClick(editableTextArea);
+		},
+		isMessaging ? UI.TEXT.QUICK_REPLIES_BUTTON : undefined
+	);
+
+	if (isMessaging) {
+		ensureEnterToSend(editableTextArea as HTMLElement);
+		quickReplies = createQuickRepliesPanel({
+			button,
+			editor: editableTextArea as HTMLElement,
+			getRecipientName: () => extractSenderName(editableTextArea),
+			onInsert: (text) => setEditableText(editableTextArea, text),
+			onMoreOptions: () => openMessagingPromptModal(editableTextArea),
+		});
+	}
+
+	attachButtonToCommentRow(editableTextArea, button);
+	if (!isMessaging) {
 		markCommentaryText(editableTextArea);
 	}
 };

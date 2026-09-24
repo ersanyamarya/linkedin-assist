@@ -97,9 +97,6 @@ export const UI = {
 		BUTTON_DEFAULTS: ["artdeco-button", "artdeco-button--muted", "artdeco-button--tertiary", "artdeco-button--circle"],
 		IDEA_BUTTON: "linkedin-assist__idea-button",
 		QUICK_ACTIONS: "linkedin-assist__quick-actions",
-		PRESET_PANEL: "linkedin-assist__preset-panel",
-		PRESET_ITEM: "linkedin-assist__preset-item",
-		PRESET_ITEM_ADVANCED: "linkedin-assist__preset-item--advanced",
 		COMMENT_ROW: "linkedin-assist__comment-row",
 		COMMENT_EDITOR: "linkedin-assist__comment-editor",
 		COMMENTARY_TEXT: "linkedin-assist__commentary-text",
@@ -121,6 +118,7 @@ export const UI = {
 		CANCEL_BUTTON: "Cancel",
 		REPOST_IDEA_BUTTON: "Draft a repost with your thoughts",
 		PROFILE_IDEA_BUTTON: "Generate a brief profile of this person",
+		QUICK_REPLIES_BUTTON: "Quick replies",
 	},
 };
 

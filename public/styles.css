@@ -86,31 +86,166 @@
 	margin-left: 8px;
 }
 
-.linkedin-assist__preset-panel {
-	display: inline-flex;
+.linkedin-assist__idea-button--active {
+	color: var(--la-primary);
+	background: var(--la-primary-tint);
+}
+
+/* --------------------------------------------------------------------------
+   Quick replies — popover of preset pills above a messaging composer.
+   Portaled to <body> with fixed positioning so chat pop-ups can't clip it.
+   -------------------------------------------------------------------------- */
+.la-quick-replies {
+	position: fixed;
+	z-index: 10000;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+	color: var(--la-text);
+	background: var(--la-bg);
+	border: 1px solid var(--la-border-light);
+	border-radius: 12px;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+	animation: la-modal-in 0.14s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.la-quick-replies__header {
+	display: flex;
+	gap: 12px;
+	align-items: baseline;
+	justify-content: space-between;
+	padding: 14px 16px 10px;
+}
+
+.la-quick-replies__title,
+.la-quick-replies__preview-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--la-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.la-quick-replies__recipient {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 12px;
+	color: var(--la-text-muted);
+	white-space: nowrap;
+}
+
+.la-quick-replies__pills {
+	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
+	padding: 0 16px;
 }
 
-.linkedin-assist__preset-item {
-	padding: 4px 8px;
-	font-size: 12px;
-	line-height: 1.2;
+.la-quick-replies__pill {
+	min-height: 36px;
+	padding: 0 14px;
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 500;
 	color: var(--la-text);
 	cursor: pointer;
-	background: var(--la-bg-muted);
-	border: 1px solid var(--la-border-light);
+	background: var(--la-bg);
+	border: 1px solid var(--la-border);
 	border-radius: 999px;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
 }
 
-.linkedin-assist__preset-item:hover {
-	background: var(--la-bg-hover);
-}
-
-.linkedin-assist__preset-item--advanced {
+.la-quick-replies__pill.is-active {
+	font-weight: 600;
 	color: var(--la-primary);
 	background: var(--la-primary-tint);
 	border-color: var(--la-primary);
+	box-shadow: inset 0 0 0 0.5px var(--la-primary);
+}
+
+.la-quick-replies__pill:focus-visible,
+.la-quick-replies__more:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
+}
+
+.la-quick-replies__preview {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px;
+	margin: 12px 16px 0;
+	background: #f7f6f3;
+	border-radius: 8px;
+}
+
+.la-quick-replies__preview-label {
+	font-size: 11px;
+}
+
+.la-quick-replies__preview-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	font-size: 13px;
+	line-height: 1.45;
+	white-space: pre-line;
+}
+
+.la-quick-replies--compact .la-quick-replies__preview {
+	display: none;
+}
+
+.la-quick-replies--compact .la-quick-replies__more-hint {
+	display: none;
+}
+
+.la-quick-replies__more {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	justify-content: center;
+	min-height: 52px;
+	padding: 8px 16px;
+	margin-top: 12px;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+	background: var(--la-bg);
+	border: none;
+	border-top: 1px solid var(--la-border-light);
+}
+
+.la-quick-replies__more:hover {
+	background: var(--la-bg-muted);
+}
+
+.la-quick-replies__more-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--la-primary);
+}
+
+.la-quick-replies__more-title::after {
+	content: " \203A";
+}
+
+.la-quick-replies__more-hint {
+	font-size: 12px;
+	color: var(--la-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.la-quick-replies {
+		animation: none;
+	}
 }
 
 .linkedin-assist__commentary-text {
