@@ -67,12 +67,28 @@ export const DOM = {
 		JOB_PRIMARY_DESCRIPTION: ".job-details-jobs-unified-top-card__primary-description-container",
 		JOB_DESCRIPTION_BODY: "#job-details",
 		JOB_DESCRIPTION_BODY_FALLBACK: ".jobs-description-content__text--stretch",
+		// Profile page selectors. The profile ships fully hashed class names and no ids or data-view-name
+		// hooks, so sections are found by their <h2> text and the name comes from the document title.
+		PROFILE_SECTION: "main section",
+		PROFILE_SECTION_HEADING: "h2",
+		// The profile scrolls inside <main>, not the window; lower sections only render once scrolled into view.
+		PROFILE_SCROLL_CONTAINER: "main#workspace",
+		PROFILE_ACTIONS_SELECTORS: [".pvs-profile-actions", ".pv-top-card-v2-ctas"],
+		// Structural fallback when the action row's classes are hashed: its buttons keep stable aria-labels.
+		PROFILE_ACTION_BUTTON_FALLBACKS: [
+			'main a[href*="/messaging/compose"]',
+			'main button[aria-label^="Message"]',
+			'main button[aria-label*="to connect"]',
+			'main button[aria-label^="Follow"]',
+			'main button[aria-label="More actions"]',
+		],
 	},
 
 	ATTR: {
 		DATA_MUTATED: "data-mutated",
 		DATA_JOB_IDEA: "data-la-job-idea",
 		DATA_REPOST_IDEA: "data-la-repost-idea",
+		DATA_PROFILE_IDEA: "data-la-profile-idea",
 	},
 };
 
@@ -104,6 +120,7 @@ export const UI = {
 		GENERATE_BUTTON: "Generate prompt",
 		CANCEL_BUTTON: "Cancel",
 		REPOST_IDEA_BUTTON: "Draft a repost with your thoughts",
+		PROFILE_IDEA_BUTTON: "Generate a brief profile of this person",
 	},
 };
 

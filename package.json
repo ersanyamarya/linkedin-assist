@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "copy": "cp -r public/** dist/",
-    "build": "bun run clean && mkdir dist && bun run copy && bun build --target node ./src/**/** --outdir dist",
+    "build": "bun run clean && mkdir dist && bun run copy && bun build --target node --format iife ./src/**/** --outdir dist",
     "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
     "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\"",
     "format": "ultracite fix"

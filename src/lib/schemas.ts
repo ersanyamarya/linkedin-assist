@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// Zod probes for `new Function()` to JIT-compile object parsers. MV3 content scripts forbid eval,
+// so the probe trips a CSP violation that Chrome reports as an extension error. Skip the JIT.
+z.config({ jitless: true });
+
 /**
  * A post and its visible comments, extracted from LinkedIn's feed or single-post page.
  */
@@ -22,6 +26,24 @@ export const RepostSchema = z
 	.strict();
 
 export type Repost = z.infer<typeof RepostSchema>;
+
+/**
+ * A visited member's profile, extracted from their LinkedIn profile page.
+ */
+export const ProfileSchema = z
+	.object({
+		name: z.string(),
+		headline: z.string(),
+		location: z.string(),
+		about: z.string(),
+		experience: z.string(),
+		education: z.string(),
+		skills: z.string(),
+		recentActivity: z.array(z.string()),
+	})
+	.strict();
+
+export type Profile = z.infer<typeof ProfileSchema>;
 
 /**
  * A single message event in a messaging thread.
