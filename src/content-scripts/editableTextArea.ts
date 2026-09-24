@@ -310,7 +310,7 @@ const createPresetPanel = (editableTextArea: Element): HTMLDivElement => {
 	advancedButton.textContent = ADVANCED_PRESET_LABEL;
 	advancedButton.addEventListener("click", () => {
 		panel.style.display = "none";
-		openMessagingPromptModal();
+		openMessagingPromptModal(editableTextArea);
 	});
 
 	for (const button of [...presetButtons, advancedButton]) {
@@ -353,7 +353,7 @@ const markCommentaryText = (editableTextArea: Element) => {
  * Handles idea button clicks for a comment editor.
  * Detects if we're on a messaging thread or a regular post and extracts accordingly.
  */
-const openMessagingPromptModal = () => {
+const openMessagingPromptModal = (editableTextArea: Element) => {
 	const { senderName, messages } = extractMessagingThreadDetails();
 	if (!senderName && messages.length === 0) {
 		alert("Could not extract messaging thread details.");
@@ -379,7 +379,11 @@ const openMessagingPromptModal = () => {
 		data: parsed.data,
 		buildPrompt: buildMessagesPrompt,
 		onSubmit: (result) => {
-			createTextModal(result.text, result.mode === "preset" ? "Your Reply" : "Generated Prompt");
+			if (result.mode === "preset") {
+				setEditableText(editableTextArea, result.text);
+				return;
+			}
+			createTextModal(result.text, "Generated Prompt");
 		},
 	});
 };

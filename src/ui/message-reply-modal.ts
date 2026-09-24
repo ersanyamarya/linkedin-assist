@@ -1,7 +1,21 @@
 import type { Formality, Intent, Length, Messages, Tone } from "../lib";
 import { ALLOWED_FORMALITIES, ALLOWED_INTENTS, ALLOWED_LENGTHS, ALLOWED_TONES } from "../lib";
 import type { MessagePromptOptions } from "../prompt";
-import { checkbox, field, fieldRow, modalButtons, modalFooter, modalForm, radioGroup, select, showModal, textArea, updateOptions } from "./components";
+import {
+	el,
+	field,
+	fieldRow,
+	modalButtons,
+	modalFooter,
+	modalForm,
+	pillGroup,
+	radioGroup,
+	select,
+	showModal,
+	textArea,
+	toggleSwitch,
+	updateOptions,
+} from "./components";
 
 type MessageReplyMode = "preset" | "prompt";
 
@@ -78,8 +92,55 @@ const collectParticipants = (data: Messages): readonly string[] => {
 
 export const applyMessageTemplate = (template: string, name: string): string => template.replace(/\{name\}/g, name || "there");
 
+const TONE_HINT = "How it should feel";
+const LENGTH_HINT = "Roughly how long";
+const INTENT_HINT = "What the reply is for";
+const FORMALITY_HINT = "How formal";
+
+const SUBMIT_LABELS: Record<MessageReplyMode, string> = { preset: "Insert reply", prompt: "Generate prompt" };
+const FOOTER_HINTS: Record<MessageReplyMode, string> = {
+	preset: "Goes into the message box. Nothing is sent.",
+	prompt: "Opens the prompt, ready to copy.",
+};
+
+const HYPHENS = /-/g;
+
+// "follow-up" → "Follow up", "qualify-lead" → "Qualify lead"
+const toOptionLabel = (value: string): string => {
+	const words = value.replace(HYPHENS, " ");
+	return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
+const toOptions = <T extends string>(values: readonly T[]) => values.map((value) => ({ value, label: toOptionLabel(value) }));
+
+/** The latest message from `name`, falling back to the latest message in the thread. */
+const latestMessageFrom = (data: Messages, name: string) => {
+	const fromName = data.messages.filter((m) => normalize(m.sender) === normalize(name));
+	return fromName.at(-1) ?? data.messages.at(-1);
+};
+
+/** Card showing who you're replying to and what they last said, so the context stays in view. */
+const contextCard = () => {
+	const avatar = el("div", { className: "la-reply-context__avatar" });
+	avatar.setAttribute("aria-hidden", "true");
+	const title = el("div", { className: "la-reply-context__title" });
+	const message = el("div", { className: "la-reply-context__message" });
+	const card = el("div", { className: "la-reply-context" }, [avatar, el("div", { className: "la-reply-context__text" }, [title, message])]);
+
+	const update = (data: Messages, recipient: string) => {
+		const latest = latestMessageFrom(data, recipient);
+		const sender = normalize(latest?.sender) || recipient;
+		card.hidden = !latest?.text;
+		avatar.textContent = sender.charAt(0).toUpperCase();
+		title.textContent = `${sender} wrote`;
+		message.textContent = latest?.text ?? "";
+	};
+	return { el: card, update };
+};
+
 /**
- * Creates a modal for replying to LinkedIn message threads.
+ * Creates a modal for replying to LinkedIn message threads: either a preset reply inserted into
+ * the message box, or a prompt for an LLM built from tone, length, intent and formality.
  */
 export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	const { data, buildPrompt, onSubmit } = args;
@@ -101,87 +162,92 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		recipientSelect.disabled = true;
 	}
 
+	const context = contextCard();
+
 	// Mode toggle
 	const modeGroup = radioGroup<MessageReplyMode>(
 		"Reply type",
 		[
-			{ value: "preset", label: "Use a preset reply" },
+			{ value: "preset", label: "Preset reply" },
 			{ value: "prompt", label: "Generate a prompt" },
 		],
 		"preset"
 	);
 
 	// Preset controls
-	const presetSelect = select(
-		MESSAGE_REPLY_PRESETS.map((p) => p.label),
-		MESSAGE_REPLY_PRESETS[0]?.label
+	const presetGroup = pillGroup(
+		"Pick a preset",
+		MESSAGE_REPLY_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+		MESSAGE_REPLY_PRESETS[0]?.id ?? ""
 	);
 	const presetPreview = textArea("");
+	presetPreview.rows = 7;
+	const charCount = el("small", { className: "la-hint" });
+	const presetPreviewSection = el("div", { className: "la-field" }, [
+		el("div", { className: "la-field__header" }, [el("label", { className: "la-label" }, ["Message"]), charCount]),
+		presetPreview,
+	]);
+	const presetSection = el("div", { className: "la-reply__section" }, [presetGroup.el, presetPreviewSection]);
 
 	// Prompt controls
-	const toneSelect = select(ALLOWED_TONES as unknown as string[]);
-	const lengthSelect = select(ALLOWED_LENGTHS as unknown as string[]);
-	const intentSelect = select(ALLOWED_INTENTS as unknown as string[]);
-	const formalitySelect = select(ALLOWED_FORMALITIES as unknown as string[]);
-	const ctaCheckbox = checkbox("Include a call-to-action", false);
-	const extraInstructions = textArea("", false, "Optional extra instructions");
+	const toneGroup = pillGroup<Tone>("Tone", toOptions(ALLOWED_TONES), ALLOWED_TONES[0], TONE_HINT);
+	const lengthGroup = pillGroup<Length>("Length", toOptions(ALLOWED_LENGTHS), ALLOWED_LENGTHS[0], LENGTH_HINT);
+	const intentGroup = pillGroup<Intent>("Intent", toOptions(ALLOWED_INTENTS), ALLOWED_INTENTS[0], INTENT_HINT);
+	const formalityGroup = pillGroup<Formality>("Formality", toOptions(ALLOWED_FORMALITIES), "medium", FORMALITY_HINT);
+	const ctaSwitch = toggleSwitch("Include a call-to-action", "Ends the reply with a clear next step");
+	const extraInstructions = textArea("", false, "e.g. mention I'm free next Tuesday afternoon");
+	extraInstructions.rows = 3;
+	const promptSection = el("div", { className: "la-reply__section" }, [
+		toneGroup.el,
+		lengthGroup.el,
+		intentGroup.el,
+		formalityGroup.el,
+		ctaSwitch.el,
+		field("Extra instructions (optional)", extraInstructions),
+	]);
 
-	// Preset/prompt sections
-	const presetSection = field("Preset", presetSelect);
-	const presetPreviewSection = field("Preset preview", presetPreview, "Edit if you want to tweak the message");
-	const promptOptionsRow = fieldRow(
-		field("Tone", toneSelect, "How should the tone feel?"),
-		field("Length", lengthSelect, "How long should the reply be?"),
-		field("Intent", intentSelect, "What's the goal?"),
-		field("Formality", formalitySelect, "How formal?")
-	);
-	const ctaSection = field("Call-to-action", ctaCheckbox.el, "Optional: Add a clear next step");
-	const instructionsSection = field("Extra instructions", extraInstructions, "Optional: Additional LLM guidance");
-
-	const submitLabelForMode = (mode: MessageReplyMode): string => (mode === "preset" ? "Use this reply" : "Generate prompt");
+	const footerHint = el("small", { className: "la-hint" });
 
 	// Visibility toggle
 	const updateVisibility = () => {
-		const isPreset = modeGroup.getValue() === "preset";
-		presetSection.style.display = isPreset ? "" : "none";
-		presetPreviewSection.style.display = isPreset ? "" : "none";
-		promptOptionsRow.style.display = isPreset ? "none" : "";
-		ctaSection.style.display = isPreset ? "none" : "";
-		instructionsSection.style.display = isPreset ? "none" : "";
-		submitBtn.textContent = submitLabelForMode(modeGroup.getValue());
+		const mode = modeGroup.getValue();
+		presetSection.hidden = mode !== "preset";
+		promptSection.hidden = mode !== "prompt";
+		submitBtn.textContent = SUBMIT_LABELS[mode];
+		footerHint.textContent = FOOTER_HINTS[mode];
 	};
 
-	// Update preview
+	const updateCharCount = () => {
+		charCount.textContent = `${presetPreview.value.length} characters · edit freely`;
+	};
+
+	// Picking a preset replaces whatever was typed in the message box.
 	const updatePreview = () => {
-		const preset = MESSAGE_REPLY_PRESETS.find((p) => p.label === presetSelect.value) ?? MESSAGE_REPLY_PRESETS[0];
+		const preset = MESSAGE_REPLY_PRESETS.find((p) => p.id === presetGroup.getValue()) ?? MESSAGE_REPLY_PRESETS[0];
 		presetPreview.value = applyMessageTemplate(preset?.template ?? "", recipientSelect.value);
+		updateCharCount();
+	};
+
+	const updateRecipient = () => {
+		context.update(data, recipientSelect.value || senderName);
+		updatePreview();
 	};
 
 	// Wire events
 	yourNameSelect.addEventListener("change", () => {
 		const available = participants.filter((n) => n !== yourNameSelect.value);
 		updateOptions(recipientSelect, available, available[0] ?? "");
-		updatePreview();
+		updateRecipient();
 	});
-	recipientSelect.addEventListener("change", updatePreview);
-	presetSelect.addEventListener("change", updatePreview);
+	recipientSelect.addEventListener("change", updateRecipient);
+	presetGroup.el.addEventListener("change", updatePreview);
+	presetPreview.addEventListener("input", updateCharCount);
 	modeGroup.el.addEventListener("change", updateVisibility);
-
-	// Initialize
-	updatePreview();
 
 	let closeModal: () => void = () => {};
 
 	const form = modalForm(
-		[
-			fieldRow(field("You are", yourNameSelect, "Select your name"), field("Address", recipientSelect, "Who is the reply for?")),
-			modeGroup.el,
-			presetSection,
-			presetPreviewSection,
-			promptOptionsRow,
-			ctaSection,
-			instructionsSection,
-		],
+		[context.el, fieldRow(field("You are", yourNameSelect), field("Replying to", recipientSelect)), modeGroup.el, presetSection, promptSection],
 		(event) => {
 			event.preventDefault();
 			const mode = modeGroup.getValue();
@@ -196,11 +262,11 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			const options: MessagePromptOptions = {
 				currentUserName: normalize(yourNameSelect.value) || undefined,
 				recipientName: normalize(recipientName) || undefined,
-				tone: (toneSelect.value as Tone) || undefined,
-				length: (lengthSelect.value as Length) || undefined,
-				intent: (intentSelect.value as Intent) || undefined,
-				formality: (formalitySelect.value as Formality) || undefined,
-				includeCTA: ctaCheckbox.input.checked || undefined,
+				tone: toneGroup.getValue(),
+				length: lengthGroup.getValue(),
+				intent: intentGroup.getValue(),
+				formality: formalityGroup.getValue(),
+				includeCTA: ctaSwitch.isOn() || undefined,
 				extraInstructions: normalize(extraInstructions.value) || undefined,
 			};
 
@@ -208,11 +274,17 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			closeModal();
 		}
 	);
+	form.classList.add("la-reply");
 
-	const footer = modalFooter([modalButtons("Cancel", submitLabelForMode(modeGroup.getValue()), () => closeModal(), form.id)]);
+	const footer = modalFooter([
+		el("div", { className: "la-modal__footer-row" }, [footerHint, modalButtons("Cancel", SUBMIT_LABELS.preset, () => closeModal(), form.id)]),
+	]);
 	const submitBtn = footer.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+	// Initialize
+	updateRecipient();
 	updateVisibility();
 
-	const { close } = showModal("Reply to LinkedIn message", [form], footer);
+	const { close } = showModal("Reply to message", [form], footer);
 	closeModal = close;
 };

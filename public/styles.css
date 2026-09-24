@@ -25,27 +25,6 @@
 	color-scheme: light;
 }
 
-/* Our modal is a self-contained overlay, independent of LinkedIn's own theme, so it follows
-   the OS-level color scheme rather than trying to detect LinkedIn's (unstable) theme markup. */
-@media (prefers-color-scheme: dark) {
-	:root {
-		--la-primary: #6bb1ff;
-		--la-primary-hover: #8fc4ff;
-		--la-primary-tint: rgba(107, 177, 255, 0.16);
-		--la-primary-contrast: #0b1720;
-		--la-text: #e9edf1;
-		--la-text-muted: #9aa7b2;
-		--la-icon: #9aa7b2;
-		--la-bg: #1b2226;
-		--la-bg-muted: #242c31;
-		--la-bg-hover: #2b343a;
-		--la-border: #3a444a;
-		--la-border-light: #333c42;
-		--la-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-		color-scheme: dark;
-	}
-}
-
 /* --------------------------------------------------------------------------
    Comment Row (idea button injection)
    -------------------------------------------------------------------------- */
@@ -300,6 +279,7 @@
 .la-input,
 .la-textarea,
 .la-select {
+	box-sizing: border-box;
 	width: 100%;
 	padding: 8px 10px;
 	font-size: 13px;
@@ -440,6 +420,252 @@
 .la-segmented__option:has(.la-segmented__input:focus-visible) {
 	outline: 2px solid var(--la-primary);
 	outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Pill group — wrapping single-choice buttons (presets, tone, length, …)
+   -------------------------------------------------------------------------- */
+.la-pills {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+	padding: 0;
+	margin: 0;
+	border: none;
+}
+
+.la-pills__header,
+.la-field__header {
+	display: flex;
+	gap: 12px;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.la-pills__header {
+	width: 100%;
+	padding: 0;
+}
+
+.la-pills__track {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.la-pill {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	padding: 0 14px;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--la-text);
+	cursor: pointer;
+	background: var(--la-bg);
+	border: 1px solid var(--la-border);
+	border-radius: 999px;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.la-pill:hover {
+	background: var(--la-bg-hover);
+}
+
+.la-pill__input {
+	position: absolute;
+	pointer-events: none;
+	opacity: 0;
+}
+
+.la-pill:has(.la-pill__input:checked) {
+	font-weight: 600;
+	color: var(--la-primary);
+	background: var(--la-primary-tint);
+	border-color: var(--la-primary);
+	box-shadow: inset 0 0 0 0.5px var(--la-primary);
+}
+
+.la-pill:has(.la-pill__input:focus-visible) {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Switch — single on/off setting
+   -------------------------------------------------------------------------- */
+.la-switch-row {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 14px;
+	border: 1px solid var(--la-border-light);
+	border-radius: var(--la-radius-lg);
+}
+
+.la-switch-row__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.la-switch-row__title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--la-text);
+}
+
+.la-switch {
+	position: relative;
+	flex-shrink: 0;
+	width: 44px;
+	height: 26px;
+	padding: 0;
+	cursor: pointer;
+	background: #b9b6b0;
+	border: none;
+	border-radius: 13px;
+	transition: background-color 0.15s ease;
+}
+
+.la-switch[aria-checked="true"] {
+	background: var(--la-primary);
+}
+
+.la-switch__knob {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 20px;
+	height: 20px;
+	background: #fff;
+	border-radius: 50%;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+	transition: left 0.15s ease;
+}
+
+.la-switch[aria-checked="true"] .la-switch__knob {
+	left: 21px;
+}
+
+.la-switch:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.la-switch,
+	.la-switch__knob {
+		transition: none;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   Message reply modal
+   -------------------------------------------------------------------------- */
+.la-reply .la-label {
+	font-size: 12px;
+	color: var(--la-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.la-reply .la-textarea {
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.la-reply .la-select {
+	height: 40px;
+	font-size: 14px;
+}
+
+.la-reply__section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.la-reply [hidden] {
+	display: none;
+}
+
+.la-reply-context {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px 14px;
+	background: #f7f6f3;
+	border-radius: var(--la-radius-lg);
+}
+
+.la-reply-context__avatar {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #0a4a8a;
+	background: #dce6f1;
+	border-radius: 50%;
+}
+
+.la-reply-context__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.la-reply-context__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--la-text);
+}
+
+.la-reply-context__message {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	-webkit-line-clamp: 2;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--la-text-muted);
+}
+
+.la-reply .la-segmented__track {
+	border-radius: 10px;
+}
+
+.la-reply .la-segmented__option {
+	min-height: 40px;
+	padding: 0 12px;
+	font-size: 14px;
+	border-radius: 8px;
+}
+
+.la-modal__footer-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.la-modal__footer-row .la-btn {
+	min-height: 40px;
+	font-weight: 600;
+	border-radius: 20px;
 }
 
 /* --------------------------------------------------------------------------

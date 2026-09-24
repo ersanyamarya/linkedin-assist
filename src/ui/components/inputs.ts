@@ -102,6 +102,52 @@ export const radioGroup = <T extends string>(
 	return { el: fs, getValue: () => (radios.find((r) => r.input.checked)?.input.value as T) ?? defaultValue };
 };
 
+let pillGroupCounter = 0;
+
+/**
+ * Wrapping row of pill buttons for one choice among a handful of options. Backed by real radio
+ * inputs so arrow keys and screen readers work; `el` fires a bubbling `change` when the pick changes.
+ */
+export const pillGroup = <T extends string>(
+	legend: string,
+	options: readonly { value: T; label: string }[],
+	defaultValue: T,
+	hint?: string
+): { el: HTMLFieldSetElement; getValue: () => T } => {
+	const name = `la-pills-${++pillGroupCounter}`;
+	const inputs = options.map((opt) => el("input", { type: "radio", name, value: opt.value, checked: opt.value === defaultValue, className: "la-pill__input" }));
+	const pills = options.map((opt, i) => el("label", { className: "la-pill" }, [inputs[i] as HTMLInputElement, el("span", {}, [opt.label])]));
+
+	// The legend must stay the fieldset's first child to name the group, so the hint sits inside it.
+	const header = el("legend", { className: "la-pills__header" }, [
+		el("span", { className: "la-label" }, [legend]),
+		...(hint ? [el("small", { className: "la-hint" }, [hint])] : []),
+	]);
+	const fs = el("fieldset", { className: "la-pills" }, [header, el("div", { className: "la-pills__track" }, pills)]);
+
+	return { el: fs, getValue: () => (inputs.find((input) => input.checked)?.value as T) ?? defaultValue };
+};
+
+/** On/off switch with a title and optional description, for a single boolean setting */
+export const toggleSwitch = (title: string, description?: string, initial = false): { el: HTMLDivElement; isOn: () => boolean } => {
+	let on = initial;
+	const knob = el("span", { className: "la-switch__knob" });
+	const button = el("button", { type: "button", className: "la-switch", role: "switch" }, [knob]);
+	button.setAttribute("aria-label", title);
+	const sync = () => button.setAttribute("aria-checked", String(on));
+	button.addEventListener("click", () => {
+		on = !on;
+		sync();
+	});
+	sync();
+
+	const text = el("div", { className: "la-switch-row__text" }, [
+		el("div", { className: "la-switch-row__title" }, [title]),
+		...(description ? [el("small", { className: "la-hint" }, [description])] : []),
+	]);
+	return { el: el("div", { className: "la-switch-row" }, [text, button]), isOn: () => on };
+};
+
 /** Labeled field (wraps any input with label + optional hint) */
 export const field = labeled;
 

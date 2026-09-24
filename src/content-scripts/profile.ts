@@ -76,10 +76,12 @@ const getSectionHeading = (section: Element): string => normalizeWhitespace(sect
  * Sections nest (an outer wrapper can share its first <h2> with an inner card), so the last,
  * innermost section with a matching heading is the card itself.
  */
-const findSection = (heading: string): HTMLElement | undefined =>
-	Array.from(document.querySelectorAll<HTMLElement>(DOM.SELECTORS.PROFILE_SECTION))
-		.filter((section) => getSectionHeading(section).startsWith(heading))
-		.at(-1);
+const findSection = (heading: string): HTMLElement | undefined => {
+	const matches = Array.from(document.querySelectorAll<HTMLElement>(DOM.SELECTORS.PROFILE_SECTION)).filter((section) =>
+		getSectionHeading(section).startsWith(heading)
+	);
+	return matches.at(-1);
+};
 
 /** The section's visible lines, minus its heading, control labels, and consecutive duplicates. */
 const getSectionLines = (section: HTMLElement | undefined): string[] => {
