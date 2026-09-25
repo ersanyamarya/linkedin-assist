@@ -3,6 +3,8 @@
   "entry": [
     "src/content-scripts/editable-text-area.ts",
     "src/content-scripts/job-description.ts",
-    "src/content-scripts/profile.ts"
+    "src/content-scripts/profile.ts",
+    "src/background/service-worker.ts",
+    "src/options/options.ts"
   ]
 }

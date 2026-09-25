@@ -76,7 +76,7 @@ const buildJobSnapshot = () => {
 
 const showJobModal = () => {
 	const snapshot = buildJobSnapshot();
-	createTextModal(JSON.stringify(snapshot, null, 2), "Job details", "The details read from this job posting.");
+	createTextModal(JSON.stringify(snapshot, null, 2), "Job details", "The details read from this job posting.", { generate: false });
 };
 
 /**

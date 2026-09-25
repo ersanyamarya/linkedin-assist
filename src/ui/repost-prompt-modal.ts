@@ -5,7 +5,8 @@ import { composeFooter, instructionsFields, lengthGroup, postPreview, submitIfVa
 
 type RepostPromptModalArgs = {
 	readonly postText: string;
-	readonly onSubmit: (options: RepostPromptOptions) => void;
+	/** `reopen` brings this form back, as the user left it. */
+	readonly onSubmit: (options: RepostPromptOptions, reopen: () => void) => void;
 };
 
 /**
@@ -14,7 +15,7 @@ type RepostPromptModalArgs = {
 export const createRepostPromptModal = (args: RepostPromptModalArgs): void => {
 	const { postText, onSubmit } = args;
 
-	let closeModal: () => void = () => {};
+	let modal: { close: () => void; hide: () => void; show: () => void } | undefined;
 
 	const yourTake = yourTakeField("This shapes the caption most", "Why are you sharing this? What should your network take from it?");
 	const tone = toneGroup();
@@ -35,13 +36,14 @@ export const createRepostPromptModal = (args: RepostPromptModalArgs): void => {
 				extraInstructions: instructions.getExtraInstructions(),
 			};
 
-			if (submitIfValid(RepostPromptOptionsSchema, options, onSubmit)) closeModal();
+			if (!modal) return;
+			const { hide, show } = modal;
+			if (submitIfValid(RepostPromptOptionsSchema, options, (data) => onSubmit(data, show))) hide();
 		}
 	);
 	form.classList.add("la-compose");
 
-	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => closeModal(), form.id);
-	const { close } = showModal("Repost with your thoughts", [form], footer);
-	closeModal = close;
+	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => modal?.close(), form.id);
+	modal = showModal("Repost with your thoughts", [form], footer);
 	yourTake.input.focus();
 };

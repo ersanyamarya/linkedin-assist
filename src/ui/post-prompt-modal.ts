@@ -6,7 +6,8 @@ import { composeFooter, instructionsFields, lengthGroup, postPreview, submitIfVa
 type CommentPromptModalArgs = {
 	readonly postText: string;
 	readonly comments: readonly string[];
-	readonly onSubmit: (options: CommentPromptOptions) => void;
+	/** `reopen` brings this form back, as the user left it. */
+	readonly onSubmit: (options: CommentPromptOptions, reopen: () => void) => void;
 };
 
 /**
@@ -15,7 +16,7 @@ type CommentPromptModalArgs = {
 export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void => {
 	const { postText, comments, onSubmit } = args;
 
-	let closeModal: () => void = () => {};
+	let modal: { close: () => void; hide: () => void; show: () => void } | undefined;
 
 	const yourTake = yourTakeField("This shapes the comment most", "What do you think? Agree, push back, add an example from your own work…");
 	const tone = toneGroup();
@@ -36,12 +37,13 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 			extraInstructions: instructions.getExtraInstructions(),
 		};
 
-		if (submitIfValid(CommentPromptOptionsSchema, options, onSubmit)) closeModal();
+		if (!modal) return;
+		const { hide, show } = modal;
+		if (submitIfValid(CommentPromptOptionsSchema, options, (data) => onSubmit(data, show))) hide();
 	});
 	form.classList.add("la-compose");
 
-	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => closeModal(), form.id);
-	const { close } = showModal("Comment on this post", [form], footer);
-	closeModal = close;
+	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => modal?.close(), form.id);
+	modal = showModal("Comment on this post", [form], footer);
 	yourTake.input.focus();
 };

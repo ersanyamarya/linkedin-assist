@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/biome/core"],
+  "javascript": {
+    "globals": ["chrome"]
+  },
   "formatter": {
     "lineWidth": 160,
     "indentWidth": 2,

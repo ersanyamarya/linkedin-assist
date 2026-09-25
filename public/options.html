@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" >
+		<meta name="viewport" content="width=device-width, initial-scale=1" >
+		<title>LinkedIn Assist settings</title>
+		<link rel="stylesheet" href="styles.css" >
+		<link rel="stylesheet" href="options.css" >
+	</head>
+	<body>
+		<main class="la-options">
+			<header>
+				<h1 class="la-options__title">LinkedIn Assist</h1>
+				<p class="la-hint">
+					Optional. Connect an OpenAI-compatible API to generate replies inside LinkedIn instead of copying the prompt into another AI chat.
+				</p>
+			</header>
+
+			<form id="ai-form" class="la-options__card" autocomplete="off">
+				<h2 class="la-options__heading">AI generation</h2>
+
+				<div class="la-field">
+					<label class="la-label" for="base-url">Base URL</label>
+					<input id="base-url" class="la-input" type="url" placeholder="https://api.openai.com/v1" required >
+					<small class="la-hint"
+						>OpenAI, OpenRouter, Groq, or a local server such as Ollama (http://localhost:11434/v1) or LM Studio (http://localhost:1234/v1).</small
+					>
+				</div>
+
+				<div class="la-field">
+					<label class="la-label" for="api-key">API token</label>
+					<div class="la-options__inline">
+						<input id="api-key" class="la-input" type="password" placeholder="sk-..." spellcheck="false" >
+						<button id="toggle-key" class="la-btn la-btn--secondary" type="button">Show</button>
+					</div>
+					<small class="la-hint">Leave empty for local servers that don't need one. Stored only in this browser profile, never synced.</small>
+				</div>
+
+				<div class="la-field">
+					<label class="la-label" for="model">Model</label>
+					<div class="la-options__inline">
+						<input id="model" class="la-input" list="model-list" placeholder="Load models, or type a model name" spellcheck="false" required >
+						<button id="load-models" class="la-btn la-btn--secondary" type="button">Load models</button>
+					</div>
+					<datalist id="model-list"></datalist>
+				</div>
+
+				<p id="status" class="la-options__status" role="status" aria-live="polite"></p>
+
+				<div class="la-modal__actions">
+					<button id="remove" class="la-btn la-btn--secondary" type="button">Remove</button>
+					<button class="la-btn la-btn--primary" type="submit">Save</button>
+				</div>
+			</form>
+		</main>
+		<script src="src/options/options.js"></script>
+	</body>
+</html>

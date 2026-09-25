@@ -71,20 +71,37 @@ export const modalButtons = (cancelText: string, submitText: string, onCancel: (
 	return el("div", { className: `${PREFIX}__actions` }, [cancelBtn, submitBtn]);
 };
 
-type ModalResult = { backdrop: HTMLDivElement; close: () => void };
+type ModalResult = {
+	backdrop: HTMLDivElement;
+	close: () => void;
+	/** Takes the modal off the page but keeps its elements (and whatever the user entered). */
+	hide: () => void;
+	/** Puts a hidden modal back and refocuses what had focus when it was hidden. */
+	show: () => void;
+};
 
-/** Full modal assembly with header/body/footer layout */
-export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HTMLElement, subtitle?: string): ModalResult => {
+/** Full modal assembly with header/body/footer layout. `onClose` runs however the modal is closed. */
+export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HTMLElement, subtitle?: string, onClose?: () => void): ModalResult => {
 	const onKeydown = (e: KeyboardEvent) => e.key === "Escape" && close();
-	const close = () => {
+	let lastFocused: HTMLElement | undefined;
+	const hide = () => {
+		lastFocused = document.activeElement instanceof HTMLElement && backdrop.contains(document.activeElement) ? document.activeElement : undefined;
 		backdrop.remove();
 		document.removeEventListener("keydown", onKeydown);
+	};
+	const show = () => {
+		document.body.append(backdrop);
+		document.addEventListener("keydown", onKeydown);
+		lastFocused?.focus();
+	};
+	const close = () => {
+		onClose?.();
+		hide();
 	};
 	const backdrop = modalBackdrop(close);
 	const body = modalBody(bodyContent);
 	const box = modalBox(title, body, footer, close, subtitle);
 	backdrop.append(box);
-	document.body.append(backdrop);
-	document.addEventListener("keydown", onKeydown);
-	return { backdrop, close };
+	show();
+	return { backdrop, close, hide, show };
 };

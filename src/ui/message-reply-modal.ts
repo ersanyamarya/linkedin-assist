@@ -33,7 +33,8 @@ type MessageReplyModalResult = {
 type MessageReplyModalArgs = {
 	readonly data: Messages;
 	readonly buildPrompt: (data: Messages, options: MessagePromptOptions) => string;
-	readonly onSubmit: (result: MessageReplyModalResult) => void;
+	/** `reopen` brings this form back, as the user left it (used after a prompt, not a preset). */
+	readonly onSubmit: (result: MessageReplyModalResult, reopen: () => void) => void;
 };
 
 const SIGNATURE_REGARDS = "Regards,\nSanyam Arya";
@@ -242,7 +243,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	presetPreview.addEventListener("input", updateCharCount);
 	modeGroup.el.addEventListener("change", updateVisibility);
 
-	let closeModal: () => void = () => {};
+	let modal: { close: () => void; hide: () => void; show: () => void } | undefined;
 
 	const form = modalForm(
 		[context.el, fieldRow(field("You are", yourNameSelect), field("Replying to", recipientSelect)), modeGroup.el, presetSection, promptSection],
@@ -251,9 +252,12 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			const mode = modeGroup.getValue();
 			const recipientName = recipientSelect.value || senderName;
 
+			if (!modal) return;
+			const { close, hide, show } = modal;
+
 			if (mode === "preset") {
-				onSubmit({ mode, text: presetPreview.value.trim() });
-				closeModal();
+				onSubmit({ mode, text: presetPreview.value.trim() }, show);
+				close();
 				return;
 			}
 
@@ -268,14 +272,14 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 				extraInstructions: normalizeWhitespace(extraInstructions.value) || undefined,
 			};
 
-			onSubmit({ mode, text: buildPrompt(data, options) });
-			closeModal();
+			onSubmit({ mode, text: buildPrompt(data, options) }, show);
+			hide();
 		}
 	);
 	form.classList.add("la-compose");
 
 	const footer = modalFooter([
-		el("div", { className: "la-modal__footer-row" }, [footerHint, modalButtons("Cancel", SUBMIT_LABELS.preset, () => closeModal(), form.id)]),
+		el("div", { className: "la-modal__footer-row" }, [footerHint, modalButtons("Cancel", SUBMIT_LABELS.preset, () => modal?.close(), form.id)]),
 	]);
 	const submitBtn = footer.querySelector('button[type="submit"]') as HTMLButtonElement;
 
@@ -283,6 +287,5 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	updateRecipient();
 	updateVisibility();
 
-	const { close } = showModal("Reply to message", [form], footer);
-	closeModal = close;
+	modal = showModal("Reply to message", [form], footer);
 };

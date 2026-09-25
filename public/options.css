@@ -1,0 +1,68 @@
+/* Options page layout. Shared tokens and field/button styles come from styles.css. */
+body {
+	margin: 0;
+	font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+	color: var(--la-text);
+	background: var(--la-bg-muted);
+}
+
+.la-options {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	max-width: 560px;
+	padding: 40px 16px;
+	margin: 0 auto;
+}
+
+.la-options__title {
+	margin: 0 0 6px;
+	font-size: 22px;
+}
+
+.la-options__heading {
+	margin: 0;
+	font-size: 16px;
+}
+
+.la-options__card {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 24px;
+	background: var(--la-bg);
+	border: 1px solid var(--la-border-light);
+	border-radius: var(--la-radius-lg);
+}
+
+.la-options .la-input {
+	padding: 8px 10px;
+	background: var(--la-bg);
+	border: 1px solid var(--la-border);
+	border-radius: var(--la-radius);
+}
+
+.la-options__inline {
+	display: flex;
+	gap: 8px;
+}
+
+.la-options__inline .la-btn {
+	flex-shrink: 0;
+}
+
+.la-options__status {
+	min-height: 18px;
+	margin: 0;
+	font-size: 13px;
+	color: var(--la-text-muted);
+}
+
+.la-options__status[data-tone="error"] {
+	color: #b42318;
+}
+
+.la-options__status[data-tone="success"] {
+	color: #057642;
+}

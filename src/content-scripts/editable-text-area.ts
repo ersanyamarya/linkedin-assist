@@ -94,12 +94,12 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 	createMessageReplyModal({
 		data: parsed.data,
 		buildPrompt: buildMessagesPrompt,
-		onSubmit: (result) => {
+		onSubmit: (result, reopen) => {
 			if (result.mode === "preset") {
 				setEditableText(editableTextArea, result.text);
 				return;
 			}
-			createTextModal(result.text, "Your reply prompt is ready");
+			createTextModal(result.text, "Your reply prompt is ready", undefined, { onBack: reopen, onInsert: (text) => setEditableText(editableTextArea, text) });
 		},
 	});
 };
@@ -129,8 +129,11 @@ const openPostPromptModal = (editableTextArea: Element) => {
 	createPostCommentPromptModal({
 		postText: parsed.data.postText,
 		comments: parsed.data.comments,
-		onSubmit: (options: CommentPromptOptions) => {
-			createTextModal(buildLinkedInCommentPrompt(options), "Your comment prompt is ready");
+		onSubmit: (options: CommentPromptOptions, reopen) => {
+			createTextModal(buildLinkedInCommentPrompt(options), "Your comment prompt is ready", undefined, {
+				onBack: reopen,
+				onInsert: (text) => setEditableText(editableTextArea, text),
+			});
 		},
 	});
 };
@@ -162,8 +165,8 @@ const openRepostPromptModal = (repostButton: Element) => {
 	console.log("LinkedIn Assist extracted for repost:", { postText });
 	createRepostPromptModal({
 		postText: parsed.data.postText,
-		onSubmit: (options: RepostPromptOptions) => {
-			createTextModal(buildLinkedInRepostPrompt(options), "Your repost prompt is ready");
+		onSubmit: (options: RepostPromptOptions, reopen) => {
+			createTextModal(buildLinkedInRepostPrompt(options), "Your repost prompt is ready", undefined, { onBack: reopen });
 		},
 	});
 };

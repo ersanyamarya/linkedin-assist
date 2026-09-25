@@ -860,6 +860,27 @@
 	outline-offset: 1px;
 }
 
+.la-prompt-panel--output {
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.55;
+	background: var(--la-bg);
+}
+
+.la-link {
+	padding: 0;
+	font: inherit;
+	color: var(--la-primary);
+	text-decoration: underline;
+	cursor: pointer;
+	background: none;
+	border: none;
+}
+
+.la-link:hover {
+	color: var(--la-primary-hover);
+}
+
 .la-btn--icon {
 	display: inline-flex;
 	gap: 8px;
@@ -1120,6 +1141,7 @@
 	background: var(--la-primary-hover);
 }
 
+.la-btn:disabled,
 .la-btn--primary:disabled {
 	cursor: default;
 	opacity: 0.6;
