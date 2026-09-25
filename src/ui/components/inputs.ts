@@ -46,7 +46,10 @@ export const radio = (name: string, value: string, label: string, checked = fals
 	return { el: el("label", { className: "la-checkbox-row", htmlFor: id }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
 };
 
-/** Checkbox list inside fieldset, with a bulk select-all/clear affordance once there's more than one item */
+/**
+ * Selectable cards (one checkbox each) inside a fieldset, with a live "n of m" count and, once
+ * there's more than one item, Select all / Clear. Long items are clamped to two lines.
+ */
 export const checkboxList = (legend: string, items: readonly string[], hint?: string): { el: HTMLFieldSetElement; getSelected: () => string[] } => {
 	if (items.length === 0) {
 		const fs = fieldset(legend, [el("em", { className: "la-hint" }, ["(none)"])], "la-list");
@@ -54,26 +57,35 @@ export const checkboxList = (legend: string, items: readonly string[], hint?: st
 	}
 
 	const boxes = items.map((item) => {
-		const cb = checkbox(item, true);
-		return { input: cb.input, value: item, row: cb.el };
+		const input = el("input", { type: "checkbox", checked: true, className: "la-checkbox" });
+		const row = el("label", { className: "la-list__item" }, [input, el("span", { className: "la-list__text" }, [item])]);
+		return { input, value: item, row };
 	});
 
-	const legendRow: Node[] = [el("span", {}, [`${legend} (${items.length})`])];
+	const count = el("span", { className: "la-label" });
+	const updateCount = () => {
+		count.textContent = `${legend} · ${boxes.filter((b) => b.input.checked).length} of ${items.length}`;
+	};
+
+	const header: Node[] = [count];
 	if (items.length > 1) {
 		const setAll = (checked: boolean) => {
 			for (const b of boxes) b.input.checked = checked;
+			updateCount();
 		};
 		const selectAllBtn = el("button", { type: "button", className: "la-list__action" }, ["Select all"]);
 		selectAllBtn.addEventListener("click", () => setAll(true));
 		const clearBtn = el("button", { type: "button", className: "la-list__action" }, ["Clear"]);
 		clearBtn.addEventListener("click", () => setAll(false));
-		legendRow.push(el("div", { className: "la-list__actions" }, [selectAllBtn, clearBtn]));
+		header.push(el("span", { className: "la-list__actions" }, [selectAllBtn, clearBtn]));
 	}
 
-	const content: Node[] = [el("div", { className: "la-list__legend-row" }, legendRow), ...boxes.map((b) => b.row)];
+	const content: Node[] = [el("legend", { className: "la-list__header" }, header), ...boxes.map((b) => b.row)];
 	if (hint) content.push(el("small", { className: "la-hint" }, [hint]));
 
 	const fs = el("fieldset", { className: "la-list" }, content);
+	fs.addEventListener("change", updateCount);
+	updateCount();
 	return { el: fs, getSelected: () => boxes.filter((b) => b.input.checked).map((b) => b.value) };
 };
 

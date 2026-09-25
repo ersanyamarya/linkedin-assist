@@ -1,15 +1,11 @@
-import type { Emotion, RepostPromptOptions } from "../lib";
-import { ALLOWED_EMOTIONS, RepostPromptOptionsSchema } from "../lib";
-import { field, modalButtons, modalFooter, modalForm, numberInput, select, showModal, textArea } from "./components";
+import type { RepostPromptOptions } from "../lib";
+import { RepostPromptOptionsSchema } from "../lib";
+import { modalForm, showModal } from "./components";
+import { composeFooter, instructionsFields, lengthGroup, postPreview, toneGroup, yourTakeField } from "./compose-fields";
 
 type RepostPromptModalArgs = {
 	readonly postText: string;
 	readonly onSubmit: (options: RepostPromptOptions) => void;
-};
-
-const parseOptionalNumber = (value: string): number | undefined => {
-	const parsed = Number.parseInt(value, 10);
-	return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 /**
@@ -20,29 +16,22 @@ export const createRepostPromptModal = (args: RepostPromptModalArgs): void => {
 
 	let closeModal: () => void = () => {};
 
-	const postTextArea = textArea(postText, true);
-	const thoughtsArea = textArea("");
-	const extraInstructionsArea = textArea("If possible, do a quick internet check on the topic so the caption stays accurate and factual.");
-	const emotionSelect = select(ALLOWED_EMOTIONS);
-	const maxLengthInput = numberInput("Optional word limit");
+	const yourTake = yourTakeField("This shapes the caption most", "Why are you sharing this? What should your network take from it?");
+	const tone = toneGroup();
+	const length = lengthGroup("Word limit for the caption");
+	const instructions = instructionsFields("caption", "e.g. tag the author's point about pricing, keep it to one paragraph");
 
 	const form = modalForm(
-		[
-			field("Post", postTextArea, "Read-only extracted text"),
-			field("My perspective", thoughtsArea, "Very important — this shapes the generated caption"),
-			field("Tone", emotionSelect, "Pick the emotional tone"),
-			field("Max length", maxLengthInput, "Leave empty for no limit"),
-			field("Extra instructions", extraInstructionsArea, "Optional guidance"),
-		],
+		[postPreview(postText, "The post you're reposting"), yourTake.el, tone.el, length.el, instructions.factCheckEl, instructions.extraEl],
 		(event) => {
 			event.preventDefault();
 
 			const options: RepostPromptOptions = {
 				postText,
-				yourThoughts: thoughtsArea.value.trim(),
-				emotion: emotionSelect.value as Emotion,
-				maxLengthWords: parseOptionalNumber(maxLengthInput.value),
-				extraInstructions: extraInstructionsArea.value.trim() || undefined,
+				yourThoughts: yourTake.input.value.trim(),
+				emotion: tone.getValue(),
+				maxLengthWords: length.getWords(),
+				extraInstructions: instructions.getInstructions(),
 			};
 
 			const parsed = RepostPromptOptionsSchema.safeParse(options);
@@ -56,8 +45,10 @@ export const createRepostPromptModal = (args: RepostPromptModalArgs): void => {
 			closeModal();
 		}
 	);
+	form.classList.add("la-compose");
 
-	const footer = modalFooter([modalButtons("Cancel", "Generate prompt", () => closeModal(), form.id)]);
+	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => closeModal(), form.id);
 	const { close } = showModal("Repost with your thoughts", [form], footer);
 	closeModal = close;
+	yourTake.input.focus();
 };

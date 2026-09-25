@@ -1,16 +1,12 @@
-import type { CommentPromptOptions, Emotion } from "../lib";
-import { ALLOWED_EMOTIONS, CommentPromptOptionsSchema } from "../lib";
-import { checkboxList, field, modalButtons, modalFooter, modalForm, numberInput, select, showModal, textArea } from "./components";
+import type { CommentPromptOptions } from "../lib";
+import { CommentPromptOptionsSchema } from "../lib";
+import { checkboxList, modalForm, showModal } from "./components";
+import { composeFooter, instructionsFields, lengthGroup, postPreview, toneGroup, yourTakeField } from "./compose-fields";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
 	readonly comments: readonly string[];
 	readonly onSubmit: (options: CommentPromptOptions) => void;
-};
-
-const parseOptionalNumber = (value: string): number | undefined => {
-	const parsed = Number.parseInt(value, 10);
-	return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 /**
@@ -21,47 +17,38 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 
 	let closeModal: () => void = () => {};
 
-	const postTextArea = textArea(postText, true);
-	const thoughtsArea = textArea("");
-	const extraInstructionsArea = textArea("If possible, do a quick internet check on the topic so the comment stays accurate and factual.");
-	const emotionSelect = select(ALLOWED_EMOTIONS);
-	const maxLengthInput = numberInput("Optional word limit");
-	const commentsList = checkboxList("Reference comments", comments, "Select comments to incorporate");
+	const yourTake = yourTakeField("This shapes the comment most", "What do you think? Agree, push back, add an example from your own work…");
+	const tone = toneGroup();
+	const length = lengthGroup("Word limit for the comment");
+	const commentsList = checkboxList("Comments to reference", comments);
+	const instructions = instructionsFields("comment", "e.g. mention our pilot results, avoid hashtags");
 
-	const form = modalForm(
-		[
-			field("Post", postTextArea, "Read-only extracted text"),
-			commentsList.el,
-			field("My perspective", thoughtsArea, "Very important — this shapes the generated reply"),
-			field("Tone", emotionSelect, "Pick the emotional tone"),
-			field("Max length", maxLengthInput, "Leave empty for no limit"),
-			field("Extra instructions", extraInstructionsArea, "Optional guidance"),
-		],
-		(event) => {
-			event.preventDefault();
+	const form = modalForm([postPreview(postText), yourTake.el, tone.el, length.el, commentsList.el, instructions.factCheckEl, instructions.extraEl], (event) => {
+		event.preventDefault();
 
-			const options: CommentPromptOptions = {
-				postText,
-				selectedComments: commentsList.getSelected(),
-				yourThoughts: thoughtsArea.value.trim(),
-				emotion: emotionSelect.value as Emotion,
-				maxLengthWords: parseOptionalNumber(maxLengthInput.value),
-				extraInstructions: extraInstructionsArea.value.trim() || undefined,
-			};
+		const options: CommentPromptOptions = {
+			postText,
+			selectedComments: commentsList.getSelected(),
+			yourThoughts: yourTake.input.value.trim(),
+			emotion: tone.getValue(),
+			maxLengthWords: length.getWords(),
+			extraInstructions: instructions.getInstructions(),
+		};
 
-			const parsed = CommentPromptOptionsSchema.safeParse(options);
-			if (!parsed.success) {
-				console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
-				alert("Please review the inputs before generating the prompt.");
-				return;
-			}
-
-			onSubmit(parsed.data);
-			closeModal();
+		const parsed = CommentPromptOptionsSchema.safeParse(options);
+		if (!parsed.success) {
+			console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
+			alert("Please review the inputs before generating the prompt.");
+			return;
 		}
-	);
 
-	const footer = modalFooter([modalButtons("Cancel", "Generate prompt", () => closeModal(), form.id)]);
-	const { close } = showModal("Draft a LinkedIn comment", [form], footer);
+		onSubmit(parsed.data);
+		closeModal();
+	});
+	form.classList.add("la-compose");
+
+	const footer = composeFooter("Opens the prompt, ready to copy.", "Generate prompt", () => closeModal(), form.id);
+	const { close } = showModal("Comment on this post", [form], footer);
 	closeModal = close;
+	yourTake.input.focus();
 };

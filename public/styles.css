@@ -450,51 +450,84 @@
 .la-list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	max-height: 160px;
-	padding: 8px;
+	gap: 6px;
+	min-width: 0;
+	padding: 0;
 	margin: 0;
-	overflow-y: auto;
-	background: var(--la-bg-muted);
-	border: 1px solid var(--la-border-light);
-	border-radius: var(--la-radius);
+	border: none;
 }
 
-.la-list > legend {
-	padding: 0 4px;
-	font-size: 13px;
-	font-weight: 600;
-}
-
-.la-list__legend-row {
+.la-list__header {
 	display: flex;
 	gap: 8px;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0 4px 2px;
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--la-text);
+	width: 100%;
+	padding: 0;
+	margin-bottom: 2px;
 }
 
 .la-list__actions {
 	display: flex;
 	flex-shrink: 0;
-	gap: 10px;
+	gap: 4px;
 }
 
 .la-list__action {
-	padding: 0;
-	font-size: 12px;
-	font-weight: 500;
+	min-height: 32px;
+	padding: 0 8px;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
 	color: var(--la-primary);
 	cursor: pointer;
 	background: none;
 	border: none;
+	border-radius: var(--la-radius);
 }
 
 .la-list__action:hover {
-	text-decoration: underline;
+	background: var(--la-primary-tint);
+}
+
+.la-list__action:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 1px;
+}
+
+.la-list__item {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 10px 12px;
+	cursor: pointer;
+	background: var(--la-bg);
+	border: 1px solid var(--la-border-light);
+	border-radius: var(--la-radius-lg);
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.la-list__item:has(.la-checkbox:checked) {
+	background: #f3f8fd;
+	border-color: #b8d3ee;
+}
+
+.la-list__item .la-checkbox {
+	width: 18px !important;
+	height: 18px !important;
+	margin-top: 1px !important;
+}
+
+.la-list__text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	-webkit-line-clamp: 2;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--la-text);
 }
 
 /* --------------------------------------------------------------------------
@@ -704,31 +737,31 @@
 /* --------------------------------------------------------------------------
    Message reply modal
    -------------------------------------------------------------------------- */
-.la-reply .la-label {
+.la-compose .la-label {
 	font-size: 12px;
 	color: var(--la-text-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
 }
 
-.la-reply .la-textarea {
+.la-compose .la-textarea {
 	font-family: inherit;
 	font-size: 14px;
 	line-height: 1.55;
 }
 
-.la-reply .la-select {
+.la-compose .la-select {
 	height: 40px;
 	font-size: 14px;
 }
 
-.la-reply__section {
+.la-compose__section {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 }
 
-.la-reply [hidden] {
+.la-compose [hidden] {
 	display: none;
 }
 
@@ -778,15 +811,62 @@
 	color: var(--la-text-muted);
 }
 
-.la-reply .la-segmented__track {
+.la-compose .la-segmented__track {
 	border-radius: 10px;
 }
 
-.la-reply .la-segmented__option {
+.la-compose .la-segmented__option {
 	min-height: 40px;
 	padding: 0 12px;
 	font-size: 14px;
 	border-radius: 8px;
+}
+
+.la-post-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 14px;
+	background: #f7f6f3;
+	border-radius: var(--la-radius-lg);
+}
+
+.la-post-preview__text {
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--la-text);
+	white-space: pre-line;
+}
+
+/* Collapsed, paragraphs run together so the three visible lines aren't spent on blank lines. */
+.la-post-preview--clamped .la-post-preview__text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	white-space: normal;
+}
+
+.la-post-preview__toggle {
+	align-self: flex-start;
+	min-height: 32px;
+	padding: 0;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--la-primary);
+	cursor: pointer;
+	background: none;
+	border: none;
+}
+
+.la-post-preview__toggle:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 2px;
+}
+
+.la-compose .la-textarea--primary {
+	border: 1.5px solid var(--la-primary);
 }
 
 .la-modal__footer-row {

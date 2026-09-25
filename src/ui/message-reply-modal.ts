@@ -187,7 +187,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		el("div", { className: "la-field__header" }, [el("label", { className: "la-label" }, ["Message"]), charCount]),
 		presetPreview,
 	]);
-	const presetSection = el("div", { className: "la-reply__section" }, [presetGroup.el, presetPreviewSection]);
+	const presetSection = el("div", { className: "la-compose__section" }, [presetGroup.el, presetPreviewSection]);
 
 	// Prompt controls
 	const toneGroup = pillGroup<Tone>("Tone", toOptions(ALLOWED_TONES), ALLOWED_TONES[0], TONE_HINT);
@@ -197,7 +197,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	const ctaSwitch = toggleSwitch("Include a call-to-action", "Ends the reply with a clear next step");
 	const extraInstructions = textArea("", false, "e.g. mention I'm free next Tuesday afternoon");
 	extraInstructions.rows = 3;
-	const promptSection = el("div", { className: "la-reply__section" }, [
+	const promptSection = el("div", { className: "la-compose__section" }, [
 		toneGroup.el,
 		lengthGroup.el,
 		intentGroup.el,
@@ -274,7 +274,7 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			closeModal();
 		}
 	);
-	form.classList.add("la-reply");
+	form.classList.add("la-compose");
 
 	const footer = modalFooter([
 		el("div", { className: "la-modal__footer-row" }, [footerHint, modalButtons("Cancel", SUBMIT_LABELS.preset, () => closeModal(), form.id)]),
