@@ -16,8 +16,8 @@ message threads, extracting context into a copyable prompt modal. Runs as a cont
 
 The extension runs entirely as a **content script** (no background or popup). Here's the flow:
 
-1. **DOM Observer** (`src/content-scripts/editableTextArea.ts`): Watches `document.body` for DOM mutations
-2. **Comment Detection** (`src/content-scripts/editableTextArea.ts`): Identifies new comment editors via selector and marks them with `data-mutated`
+1. **DOM Observer** (`src/content-scripts/editable-text-area.ts`): Watches `document.body` for DOM mutations
+2. **Comment Detection** (`src/content-scripts/editable-text-area.ts`): Identifies new comment editors via selector and marks them with `data-mutated`
 3. **UI Injection**: Attaches a lightbulb idea button to the editor row
 4. **Extraction + Validation**: On click, extracts post content + comments or message thread data and validates with Zod (`src/lib/schemas.ts`)
 5. **Prompt Flow**:
@@ -31,7 +31,7 @@ The extension handles both **feed list** and **single post page** layouts by try
 ```
 src/
 ├── content-scripts/
-│   └── editableTextArea.ts # Entry point; DOM detection, extraction, UI attachment
+│   └── editable-text-area.ts # Entry point; DOM detection, extraction, UI attachment
 ├── lib/
 │   ├── constants.ts       # Centralized DOM selectors, UI classes, SVG icons
 │   ├── schemas.ts         # Zod schemas for extracted data and prompt options

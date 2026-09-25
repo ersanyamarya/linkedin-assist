@@ -1,8 +1,6 @@
 import type { Profile } from "../lib";
 import { asFencedBlock, joinSections } from "./prompt-utils";
-import { SYSTEM_INSTRUCTIONS } from "./system-instructions";
-
-const buildSystemBlock = (): string => asFencedBlock("System instructions", SYSTEM_INSTRUCTIONS);
+import { buildSystemBlock } from "./system-instructions";
 
 const buildRoleBlock = (): string =>
 	joinSections([
@@ -44,4 +42,4 @@ const buildOutputBlock = (): string =>
  * into a brief, skimmable profile of the person.
  */
 export const buildProfileSummaryPrompt = (profile: Profile): string =>
-	joinSections([buildSystemBlock(), buildRoleBlock(), ...buildProfileBlocks(profile), buildOutputBlock()]);
+	joinSections([buildSystemBlock({ voice: false }), buildRoleBlock(), ...buildProfileBlocks(profile), buildOutputBlock()]);

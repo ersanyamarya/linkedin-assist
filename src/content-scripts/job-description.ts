@@ -1,4 +1,4 @@
-import { DOM, UI } from "../lib";
+import { DOM, normalizeWhitespace, UI } from "../lib";
 import { createTextModal } from "../ui";
 
 // Tries each selector in order; returns the first element found.
@@ -22,8 +22,6 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-
-const normalizeWhitespace = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
 
 const getTextFromSelectors = (selectors: readonly string[]): string => normalizeWhitespace(queryFirst(selectors)?.textContent);
 

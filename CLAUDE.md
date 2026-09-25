@@ -34,8 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## High‑Level Architecture
 
-- **Chrome MV3 content‑script only** – `public/manifest.json` injects the compiled script `dist/content-scripts/editableTextArea.js` into every LinkedIn page (`https://www.linkedin.com/*`).
-- **DOM observer** – `src/content-scripts/editableTextArea.ts` creates a single `MutationObserver` on `document.body`. It watches for newly added comment editors using selectors defined in `src/lib/constants.ts` (`DOM.SELECTORS.EDITABLE_COMMENT_BOX`).
+- **Chrome MV3 content‑script only** – `public/manifest.json` injects the compiled script `dist/content-scripts/editable-text-area.js` into every LinkedIn page (`https://www.linkedin.com/*`).
+- **DOM observer** – `src/content-scripts/editable-text-area.ts` creates a single `MutationObserver` on `document.body`. It watches for newly added comment editors using selectors defined in `src/lib/constants.ts` (`DOM.SELECTORS.EDITABLE_COMMENT_BOX`).
 - **Idempotent wiring** – Each detected editor receives the attribute `data‑mutated` (`DOM.ATTR.DATA_MUTATED`) to prevent duplicate button injection.
 - **UI injection** – A light‑bulb “idea” button (`linkedin‑assist__ideaButton`) is appended next to the editor row. Clicking the button starts the extraction flow.
 - **Extraction & validation** –
@@ -65,7 +65,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 src/
 ├─ content‑scripts/        # entry point – DOM observation & UI injection
-│   └─ editableTextArea.ts
+│   └─ editable-text-area.ts
 ├─ lib/                    # shared constants, Zod schemas, utilities
 │   ├─ constants.ts
 │   ├─ schemas.ts

@@ -81,6 +81,7 @@ export const CommentPromptOptionsSchema = z
 		yourThoughts: z.string(),
 		emotion: EmotionsSchema,
 		maxLengthWords: z.number().optional(),
+		factCheck: z.boolean().optional(),
 		extraInstructions: z.string().optional(),
 	})
 	.strict();
@@ -93,6 +94,7 @@ export const RepostPromptOptionsSchema = z
 		yourThoughts: z.string(),
 		emotion: EmotionsSchema,
 		maxLengthWords: z.number().optional(),
+		factCheck: z.boolean().optional(),
 		extraInstructions: z.string().optional(),
 	})
 	.strict();

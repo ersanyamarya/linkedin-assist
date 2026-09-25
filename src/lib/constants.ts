@@ -26,7 +26,7 @@ export const DOM = {
 		// Like/Comment/Repost/Send action bar) is rendered with fully hashed, build-specific class
 		// names and no aria-label or data-* hooks at all, so it can't be targeted with a CSS
 		// selector. It's located structurally instead — see `REACTION_COUNT_TEXT_PATTERN` in
-		// editableTextArea.ts, which matches the reaction-count text itself (e.g. "376 reactions").
+		// editable-text-area.ts, which matches the reaction-count text itself (e.g. "376 reactions").
 		// Messaging thread selectors
 		MESSAGING_THREAD_CONTAINER: ".msg-thread",
 		MESSAGING_THREAD_PARTNER_NAME: ".msg-thread__link-to-profile h2",

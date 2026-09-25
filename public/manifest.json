@@ -6,13 +6,13 @@
   "content_scripts": [
     {
       "matches": ["https://www.linkedin.com/jobs/*"],
-      "js": ["src/content-scripts/jobDescription.js"],
+      "js": ["src/content-scripts/job-description.js"],
       "css": ["styles.css"]
     },
     {
       "matches": ["https://www.linkedin.com/*"],
       "exclude_matches": ["https://www.linkedin.com/jobs/*"],
-      "js": ["src/content-scripts/editableTextArea.js"],
+      "js": ["src/content-scripts/editable-text-area.js"],
       "css": ["styles.css"]
     },
     {

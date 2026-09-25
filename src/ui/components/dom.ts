@@ -3,7 +3,10 @@
  * Uses <fieldset>/<legend> for grouping, <label> for accessibility.
  */
 
-type ElementAttrs<T extends HTMLElement> = Partial<Record<keyof T, unknown>> & { className?: string };
+type ElementAttrs<T extends HTMLElement> = Partial<Record<keyof T, unknown>> & {
+	className?: string;
+	[attr: `aria-${string}` | `data-${string}`]: string | number;
+};
 
 /** Generic element factory with attribute assignment */
 export const el = <K extends keyof HTMLElementTagNameMap>(

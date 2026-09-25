@@ -1,5 +1,5 @@
 import type { Formality, Intent, Length, Messages, Tone } from "../lib";
-import { ALLOWED_FORMALITIES, ALLOWED_INTENTS, ALLOWED_LENGTHS, ALLOWED_TONES } from "../lib";
+import { ALLOWED_FORMALITIES, ALLOWED_INTENTS, ALLOWED_LENGTHS, ALLOWED_TONES, normalizeWhitespace } from "../lib";
 import type { MessagePromptOptions } from "../prompt";
 import {
 	el,
@@ -72,12 +72,10 @@ export const MESSAGE_REPLY_PRESETS: readonly MessageReplyPreset[] = [
 	},
 ];
 
-const normalize = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
-
 const uniqueNames = (names: readonly string[]): readonly string[] => {
 	const seen = new Set<string>();
 	return names.filter((name) => {
-		const key = normalize(name);
+		const key = normalizeWhitespace(name);
 		if (!key || seen.has(key)) return false;
 		seen.add(key);
 		return true;
@@ -85,8 +83,8 @@ const uniqueNames = (names: readonly string[]): readonly string[] => {
 };
 
 const collectParticipants = (data: Messages): readonly string[] => {
-	const messageNames = data.messages.map((m) => normalize(m.sender)).filter((n) => n.length > 0);
-	const senderName = normalize(data.senderName);
+	const messageNames = data.messages.map((m) => normalizeWhitespace(m.sender)).filter((n) => n.length > 0);
+	const senderName = normalizeWhitespace(data.senderName);
 	return uniqueNames([...messageNames, senderName].filter((n) => n.length > 0));
 };
 
@@ -115,7 +113,7 @@ const toOptions = <T extends string>(values: readonly T[]) => values.map((value)
 
 /** The latest message from `name`, falling back to the latest message in the thread. */
 const latestMessageFrom = (data: Messages, name: string) => {
-	const fromName = data.messages.filter((m) => normalize(m.sender) === normalize(name));
+	const fromName = data.messages.filter((m) => normalizeWhitespace(m.sender) === normalizeWhitespace(name));
 	return fromName.at(-1) ?? data.messages.at(-1);
 };
 
@@ -129,7 +127,7 @@ const contextCard = () => {
 
 	const update = (data: Messages, recipient: string) => {
 		const latest = latestMessageFrom(data, recipient);
-		const sender = normalize(latest?.sender) || recipient;
+		const sender = normalizeWhitespace(latest?.sender) || recipient;
 		card.hidden = !latest?.text;
 		avatar.textContent = sender.charAt(0).toUpperCase();
 		title.textContent = `${sender} wrote`;
@@ -146,11 +144,11 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	const { data, buildPrompt, onSubmit } = args;
 
 	const participants = collectParticipants(data);
-	const senderName = normalize(data.senderName);
+	const senderName = normalizeWhitespace(data.senderName);
 	const isSingle = participants.length === 1;
 
 	// Default names
-	const defaultYourName = participants.find((n) => normalize(n) !== senderName) ?? "";
+	const defaultYourName = participants.find((n) => normalizeWhitespace(n) !== senderName) ?? "";
 	const defaultRecipient = senderName || (participants.find((n) => n !== defaultYourName) ?? "");
 
 	// Name selects
@@ -260,14 +258,14 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 			}
 
 			const options: MessagePromptOptions = {
-				currentUserName: normalize(yourNameSelect.value) || undefined,
-				recipientName: normalize(recipientName) || undefined,
+				currentUserName: normalizeWhitespace(yourNameSelect.value) || undefined,
+				recipientName: normalizeWhitespace(recipientName) || undefined,
 				tone: toneGroup.getValue(),
 				length: lengthGroup.getValue(),
 				intent: intentGroup.getValue(),
 				formality: formalityGroup.getValue(),
 				includeCTA: ctaSwitch.isOn() || undefined,
-				extraInstructions: normalize(extraInstructions.value) || undefined,
+				extraInstructions: normalizeWhitespace(extraInstructions.value) || undefined,
 			};
 
 			onSubmit({ mode, text: buildPrompt(data, options) });

@@ -33,7 +33,8 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 			yourThoughts: yourTake.input.value.trim(),
 			emotion: tone.getValue(),
 			maxLengthWords: length.getWords(),
-			extraInstructions: instructions.getInstructions(),
+			factCheck: instructions.isFactCheckOn(),
+			extraInstructions: instructions.getExtraInstructions(),
 		};
 
 		const parsed = CommentPromptOptionsSchema.safeParse(options);

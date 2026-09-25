@@ -1,4 +1,4 @@
-import { DOM, ProfileSchema, UI } from "../lib";
+import { DOM, normalizeWhitespace, ProfileSchema, UI } from "../lib";
 import { buildProfileSummaryPrompt } from "../prompt";
 import { createTextModal, showNotice } from "../ui";
 
@@ -32,8 +32,6 @@ const MAX_POST_LENGTH = 800;
 const LAZY_LOAD_STEP_PX = 700;
 const LAZY_LOAD_STEP_MS = 250;
 const LAZY_LOAD_MAX_STEPS = 30;
-
-const normalizeWhitespace = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
 
 const isProfilePage = (): boolean => PROFILE_PATH_PATTERN.test(location.pathname);
 

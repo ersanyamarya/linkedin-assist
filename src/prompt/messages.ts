@@ -1,13 +1,11 @@
-import type { MessagePromptOptions, Messages } from "../lib";
-import { asFencedBlock, joinSections } from "./prompt-utils";
-import { SYSTEM_INSTRUCTIONS } from "./system-instructions";
+import { type MessagePromptOptions, type Messages, normalizeWhitespace } from "../lib";
+import { asFencedBlock, buildExtraInstructionsBlock, buildToneBlock, joinSections } from "./prompt-utils";
+import { buildSystemBlock } from "./system-instructions";
 
 /**
  * Options to tailor message prompt formatting and context.
  */
 export type { MessagePromptOptions } from "../lib";
-
-const normalizeWhitespace = (value: string): string => value.replace(/\s+/g, " ").trim();
 
 const normalizeTextBlock = (value: string): string => {
 	const normalized = value
@@ -29,97 +27,70 @@ const resolveSenderLabel = (sender: string, options: MessagePromptOptions): stri
 	const normalizedYou = normalizeNameMatch(options.currentUserName ?? "");
 	const normalizedRecipient = normalizeNameMatch(options.recipientName ?? "");
 
-	if (normalizedYou && normalizedSender === normalizedYou) return "You";
+	if (normalizedYou && normalizedSender === normalizedYou) return "Me";
 	if (normalizedRecipient && normalizedSender === normalizedRecipient) return options.recipientName ?? senderName;
 
 	return senderName;
 };
 
-const buildGoalBlock = (): string => joinSections(["## Goal", "You are an assistant helping me reply in a LinkedIn message thread."]);
-const buildSystemBlock = (): string => asFencedBlock("System instructions", SYSTEM_INSTRUCTIONS);
-const buildContextBlock = (recipientName: string | undefined, senderName: string): string => {
-	const conversationWith = normalizeWhitespace(recipientName ?? senderName) || "(unknown)";
-	return joinSections(["## Context", `**Conversation with:** ${conversationWith}`]);
+const buildTaskBlock = (recipientName: string | undefined, senderName: string): string => {
+	const conversationWith = normalizeWhitespace(recipientName ?? senderName) || "the other person";
+	return joinSections([
+		"## Task",
+		`Write my next message in this LinkedIn conversation with ${conversationWith}. Lines starting with "Me:" are mine. The last message is the most recent.`,
+	]);
 };
 
 const buildMessagesBlock = (messages: readonly { sender: string; text: string }[], options: MessagePromptOptions): string => {
-	if (messages.length === 0) {
-		return joinSections(["## Recent messages", "*(none)*"]);
-	}
+	if (messages.length === 0) return joinSections(["## Conversation", "No earlier messages. Write an opening message."]);
 
-	const messagesList = messages
-		.map((m) => {
-			const who = resolveSenderLabel(m.sender, options);
-			const text = normalizeTextBlock(m.text);
-			return `- **${who}:** ${text}`;
-		})
-		.join("\n");
-
-	return joinSections(["## Recent messages", messagesList]);
+	const lines = messages.map((m) => `${resolveSenderLabel(m.sender, options)}: ${normalizeTextBlock(m.text)}`).join("\n\n");
+	return asFencedBlock("Conversation (oldest first)", lines);
 };
-
-const buildInstructionsBlock = (): string => joinSections(["## Instructions", "- Write a helpful, friendly reply.", "- Keep it short."]);
-
-const buildToneBlock = (tone: string | undefined): string => (tone ? joinSections(["## Tone", `Use a ${tone} tone that feels authentic and natural.`]) : "");
 
 const lengthGuidance: Record<string, string> = {
-	short: "Keep it brief, 1-2 sentences if possible.",
-	medium: "Medium length, 2-4 sentences.",
-	long: "Feel free to write a longer, more detailed response.",
-};
-
-const buildLengthBlock = (length: string | undefined): string => {
-	if (!length) return "";
-	const guidance = lengthGuidance[length];
-	return guidance ? joinSections(["## Length", guidance]) : "";
+	short: "One or two sentences.",
+	medium: "Two to four sentences.",
+	long: "A short paragraph or two, with more detail.",
 };
 
 const intentGuidance: Record<string, string> = {
-	reply: "Simply respond to the message.",
-	"follow-up": "Follow up on the previous conversation.",
-	close: "Try to move the conversation toward closure or next steps.",
-	"qualify-lead": "Qualify the lead by asking relevant questions.",
-};
-
-const buildIntentBlock = (intent: string | undefined): string => {
-	if (!intent) return "";
-	const guidance = intentGuidance[intent];
-	return guidance ? joinSections(["## Intent", guidance]) : "";
+	reply: "Answer their latest message.",
+	"follow-up": "Follow up on where the conversation left off. Give them an easy reason to reply.",
+	close: "Move toward a concrete next step, like a call, a decision or a clear wrap-up.",
+	"qualify-lead": "Ask one or two questions that show whether they're a good fit, like their need, timing or who decides. Don't pitch.",
 };
 
 const formalityGuidance: Record<string, string> = {
-	low: "Keep it casual and conversational, like texting a friend.",
-	medium: "Balance between professional and casual.",
-	high: "Use formal, professional language.",
+	low: "Casual, like texting a colleague you know well.",
+	medium: "Friendly but professional.",
+	high: "Formal and professional.",
 };
 
-const buildFormalityBlock = (formality: string | undefined): string => {
-	if (!formality) return "";
-	const guidance = formalityGuidance[formality];
-	return guidance ? joinSections(["## Formality", guidance]) : "";
+/** Renders a `## label` section from a guidance map. Omitted when the key is unset or unknown. */
+const buildGuidanceBlock = (label: string, guidance: Record<string, string>, key: string | undefined): string => {
+	const text = key ? guidance[key] : undefined;
+	return text ? joinSections([`## ${label}`, text]) : "";
 };
 
 const buildCTABlock = (includeCTA: boolean | undefined): string =>
-	includeCTA ? joinSections(["## Call-to-action", "Consider including a clear next step or question to keep the conversation going."]) : "";
+	includeCTA ? joinSections(["## Call to action", "End with one clear next step or question."]) : "";
 
-const buildExtraInstructionsBlock = (extraInstructions: string | undefined): string =>
-	extraInstructions ? joinSections(["## Extra instructions", extraInstructions]) : "";
+const buildOutputBlock = (): string =>
+	joinSections(["## Output", "Only the message text, ready to paste. No quotes around it and no email-style sign-off, since this is a chat thread."]);
 
-const buildPromptParts = (data: Messages, options: MessagePromptOptions): readonly string[] => {
-	return [
-		buildSystemBlock(),
-		buildGoalBlock(),
-		buildContextBlock(options.recipientName, data.senderName),
-		buildMessagesBlock(data.messages, options),
-		buildInstructionsBlock(),
-		buildToneBlock(options.tone),
-		buildLengthBlock(options.length),
-		buildIntentBlock(options.intent),
-		buildFormalityBlock(options.formality),
-		buildCTABlock(options.includeCTA),
-		buildExtraInstructionsBlock(options.extraInstructions),
-	].filter((part) => part.length > 0);
-};
+const buildPromptParts = (data: Messages, options: MessagePromptOptions): readonly string[] => [
+	buildSystemBlock(),
+	buildTaskBlock(options.recipientName, data.senderName),
+	buildMessagesBlock(data.messages, options),
+	buildGuidanceBlock("Goal", intentGuidance, options.intent),
+	buildToneBlock(options.tone),
+	buildGuidanceBlock("Formality", formalityGuidance, options.formality),
+	buildGuidanceBlock("Length", lengthGuidance, options.length),
+	buildCTABlock(options.includeCTA),
+	buildExtraInstructionsBlock(options.extraInstructions),
+	buildOutputBlock(),
+];
 
 /**
  * Builds a prompt for an LLM to generate a reply in a LinkedIn message thread.

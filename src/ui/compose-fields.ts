@@ -72,20 +72,20 @@ export const lengthGroup = (hint: string) => {
 };
 
 /**
- * Fact-check switch (on by default) plus the optional extra-instructions box. `getInstructions()`
- * joins the fact-check sentence, when on, with whatever was typed.
+ * Fact-check switch (on by default) plus the optional extra-instructions box.
+ * The prompt builders turn `isFactCheckOn()` into the fact-check section.
  */
 export const instructionsFields = (subject: string, placeholder: string) => {
 	const factCheck = toggleSwitch("Ask for a quick fact check", `The AI checks the topic online so the ${subject} stays accurate`, true);
 	const extra = textArea("", false, placeholder);
 	extra.rows = 2;
 	const extraField = el("div", { className: "la-field" }, [el("label", { className: "la-label" }, ["Extra instructions (optional)"]), extra]);
-	const factCheckInstruction = `If possible, do a quick internet check on the topic so the ${subject} stays accurate and factual.`;
 
 	return {
 		factCheckEl: factCheck.el,
 		extraEl: extraField,
-		getInstructions: (): string | undefined => [factCheck.isOn() ? factCheckInstruction : "", extra.value.trim()].filter(Boolean).join("\n") || undefined,
+		isFactCheckOn: (): boolean => factCheck.isOn(),
+		getExtraInstructions: (): string | undefined => extra.value.trim() || undefined,
 	};
 };
 
