@@ -1,6 +1,6 @@
 import { DOM, normalizeWhitespace, ProfileSchema, UI } from "../lib";
 import { buildProfileSummaryPrompt } from "../prompt";
-import { createTextModal, showNotice } from "../ui";
+import { createIdeaButton, createTextModal, showNotice } from "../ui";
 
 // Main profile page only (e.g. /in/jane-doe/), not sub-pages like /in/jane-doe/details/experience/.
 const PROFILE_PATH_PATTERN = /^\/in\/[^/]+\/?$/;
@@ -157,15 +157,9 @@ const openProfilePromptModal = async (button: HTMLButtonElement) => {
 	createTextModal(buildProfileSummaryPrompt(parsed.data), "Your profile summary prompt is ready");
 };
 
-const createIdeaButton = (): HTMLButtonElement => {
-	const button = document.createElement("button");
-	button.classList.add(UI.CLASSES.IDEA_BUTTON);
-	button.type = "button";
-	button.title = UI.TEXT.PROFILE_IDEA_BUTTON;
-	button.setAttribute("aria-label", UI.TEXT.PROFILE_IDEA_BUTTON);
+const createProfileIdeaButton = (): HTMLButtonElement => {
+	const button = createIdeaButton(openProfilePromptModal, UI.TEXT.PROFILE_IDEA_BUTTON);
 	button.setAttribute(DOM.ATTR.DATA_PROFILE_IDEA, "true");
-	button.innerHTML = UI.SVG.IDEA;
-	button.addEventListener("click", () => openProfilePromptModal(button));
 	return button;
 };
 
@@ -198,9 +192,9 @@ const attachIdeaButton = () => {
 	const actionButton = actions ? null : queryFirst(DOM.SELECTORS.PROFILE_ACTION_BUTTON_FALLBACKS);
 	const nameHeading = findSection(getProfileName())?.querySelector(DOM.SELECTORS.PROFILE_SECTION_HEADING);
 
-	if (actions) actions.append(createIdeaButton());
-	else if (actionButton) findActionRowItem(actionButton).insertAdjacentElement("afterend", createIdeaButton());
-	else if (nameHeading) nameHeading.insertAdjacentElement("afterend", createIdeaButton());
+	if (actions) actions.append(createProfileIdeaButton());
+	else if (actionButton) findActionRowItem(actionButton).insertAdjacentElement("afterend", createProfileIdeaButton());
+	else if (nameHeading) nameHeading.insertAdjacentElement("afterend", createProfileIdeaButton());
 };
 
 // LinkedIn is a single-page app, so this script runs on every page and checks the path on each

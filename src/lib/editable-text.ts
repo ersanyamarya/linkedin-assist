@@ -57,27 +57,28 @@ export const setEditableText = (editableTextArea: Element, text: string) => {
 
 const ENTER_TO_SEND_ATTR = "data-enter-to-send-bound";
 
+const SEND_BUTTON_SELECTOR = "button[type='submit'], button.msg-form__send-button, button[data-control-name='send'], button[aria-label^='Send']";
+
+/** Plain Enter: no modifier, not mid-IME-composition, not already handled. */
+const isPlainEnter = (event: KeyboardEvent): boolean =>
+	!event.defaultPrevented && event.key === "Enter" && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && !event.isComposing;
+
+/** The enabled send button in the editor's form, or null when there's no text or nothing to click. */
+const findEnabledSendButton = (editor: HTMLElement): HTMLButtonElement | null => {
+	if (!editor.textContent?.trim()) return null;
+	const sendButton = editor.closest("form")?.querySelector<HTMLButtonElement>(SEND_BUTTON_SELECTOR) ?? null;
+	if (!sendButton || sendButton.hasAttribute("disabled") || sendButton.getAttribute("aria-disabled") === "true") return null;
+	return sendButton;
+};
+
 export const ensureEnterToSend = (editableTextArea: HTMLElement) => {
 	if (editableTextArea.hasAttribute(ENTER_TO_SEND_ATTR)) return;
 	editableTextArea.setAttribute(ENTER_TO_SEND_ATTR, "true");
 
 	editableTextArea.addEventListener("keydown", (event: KeyboardEvent) => {
-		if (event.defaultPrevented) return;
-		if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
-		if (event.isComposing) return;
-
-		const target = event.currentTarget as HTMLElement;
-		if (!target.textContent?.trim()) return;
-
-		const form = target.closest("form");
-		if (!form) return;
-
-		const sendButton =
-			form.querySelector<HTMLButtonElement>(
-				"button[type='submit'], button.msg-form__send-button, button[data-control-name='send'], button[aria-label^='Send']"
-			) ?? null;
+		if (!isPlainEnter(event)) return;
+		const sendButton = findEnabledSendButton(event.currentTarget as HTMLElement);
 		if (!sendButton) return;
-		if (sendButton.hasAttribute("disabled") || sendButton.getAttribute("aria-disabled") === "true") return;
 
 		event.preventDefault();
 		sendButton.click();

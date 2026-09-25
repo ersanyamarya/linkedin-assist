@@ -2,6 +2,7 @@ import type { CommentPromptOptions, RepostPromptOptions } from "../lib";
 import { DOM, ensureEnterToSend, MessagesSchema, PostCommentsSchema, RepostSchema, setEditableText, UI } from "../lib";
 import { buildLinkedInCommentPrompt, buildLinkedInRepostPrompt, buildMessagesPrompt } from "../prompt";
 import {
+	createIdeaButton,
 	createMessageReplyModal,
 	createPostCommentPromptModal,
 	createQuickRepliesPanel,
@@ -35,20 +36,6 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-
-/**
- * Builds the idea button element.
- */
-const createIdeaButton = (onClick: () => void, label = "Generate a reply idea"): HTMLButtonElement => {
-	const button = document.createElement("button");
-	button.classList.add(UI.CLASSES.IDEA_BUTTON);
-	button.type = "button";
-	button.title = label;
-	button.setAttribute("aria-label", label);
-	button.innerHTML = UI.SVG.IDEA;
-	button.addEventListener("click", onClick);
-	return button;
-};
 
 /**
  * Adds comment-row styling and button to the editor row.

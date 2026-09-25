@@ -1,8 +1,7 @@
 import type { CommentPromptOptions } from "../lib";
 import { CommentPromptOptionsSchema } from "../lib";
 import { checkboxList, modalForm, showModal } from "./components";
-import { composeFooter, instructionsFields, lengthGroup, postPreview, toneGroup, yourTakeField } from "./compose-fields";
-import { showNotice } from "./notice";
+import { composeFooter, instructionsFields, lengthGroup, postPreview, submitIfValid, toneGroup, yourTakeField } from "./compose-fields";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
@@ -37,15 +36,7 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 			extraInstructions: instructions.getExtraInstructions(),
 		};
 
-		const parsed = CommentPromptOptionsSchema.safeParse(options);
-		if (!parsed.success) {
-			console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
-			showNotice("Some inputs need a look", "Check your take and the options, then generate the prompt again.");
-			return;
-		}
-
-		onSubmit(parsed.data);
-		closeModal();
+		if (submitIfValid(CommentPromptOptionsSchema, options, onSubmit)) closeModal();
 	});
 	form.classList.add("la-compose");
 

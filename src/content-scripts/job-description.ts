@@ -1,5 +1,5 @@
-import { DOM, normalizeWhitespace, UI } from "../lib";
-import { createTextModal } from "../ui";
+import { DOM, normalizeWhitespace } from "../lib";
+import { createIdeaButton, createTextModal } from "../ui";
 
 // Tries each selector in order; returns the first element found.
 const queryFirst = (selectors: readonly string[]): Element | null => {
@@ -74,17 +74,6 @@ const buildJobSnapshot = () => {
 	};
 };
 
-const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
-	const button = document.createElement("button");
-	button.classList.add(UI.CLASSES.IDEA_BUTTON);
-	button.type = "button";
-	button.title = "Generate an idea for this job";
-	button.setAttribute("aria-label", "Generate an idea for this job");
-	button.innerHTML = UI.SVG.IDEA;
-	button.addEventListener("click", onClick);
-	return button;
-};
-
 const showJobModal = () => {
 	const snapshot = buildJobSnapshot();
 	createTextModal(JSON.stringify(snapshot, null, 2), "Job details", "The details read from this job posting.");
@@ -112,6 +101,6 @@ const attachIdeaButton = (saveButton: Element) => {
 	if (saveButton.hasAttribute(DOM.ATTR.DATA_JOB_IDEA)) return;
 
 	saveButton.setAttribute(DOM.ATTR.DATA_JOB_IDEA, "true");
-	const ideaButton = createIdeaButton(showJobModal);
+	const ideaButton = createIdeaButton(showJobModal, "Generate an idea for this job");
 	findInsertionAnchor(saveButton).insertAdjacentElement("afterend", ideaButton);
 };

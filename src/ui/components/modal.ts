@@ -11,7 +11,7 @@ let formIdCounter = 0;
 const generateFormId = (): string => `${PREFIX}-form-${++formIdCounter}`;
 
 /** Modal backdrop (click outside to close) */
-export const modalBackdrop = (onClose: () => void): HTMLDivElement => {
+const modalBackdrop = (onClose: () => void): HTMLDivElement => {
 	const backdrop = el("div", { className: PREFIX });
 	backdrop.addEventListener("click", (e) => e.target === backdrop && onClose());
 	return backdrop;
@@ -30,20 +30,20 @@ const closeIconButton = (onClose: () => void): HTMLButtonElement => {
 };
 
 /** Modal header (static title area, optional one-line subtitle) with a close (×) button */
-export const modalHeader = (title: string, onClose?: () => void, subtitle?: string): HTMLElement => {
+const modalHeader = (title: string, onClose?: () => void, subtitle?: string): HTMLElement => {
 	const heading = el("h2", { className: `${PREFIX}__title` }, [title]);
 	const titleBlock = subtitle ? el("div", { className: `${PREFIX}__heading` }, [heading, el("p", { className: `${PREFIX}__subtitle` }, [subtitle])]) : heading;
 	return el("header", { className: `${PREFIX}__header` }, [titleBlock, ...(onClose ? [closeIconButton(onClose)] : [])]);
 };
 
 /** Modal body (scrollable content area) */
-export const modalBody = (children: (Node | string)[]): HTMLDivElement => el("div", { className: `${PREFIX}__body` }, children);
+const modalBody = (children: (Node | string)[]): HTMLDivElement => el("div", { className: `${PREFIX}__body` }, children);
 
 /** Modal footer (static button area) */
 export const modalFooter = (children: (Node | string)[]): HTMLElement => el("footer", { className: `${PREFIX}__footer` }, children);
 
 /** Modal container with header/body/footer structure */
-export const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement, onClose?: () => void, subtitle?: string): HTMLDivElement => {
+const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement, onClose?: () => void, subtitle?: string): HTMLDivElement => {
 	const children: HTMLElement[] = [];
 	if (title) children.push(modalHeader(title, onClose, subtitle));
 	children.push(body);
@@ -87,21 +87,4 @@ export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HT
 	document.body.append(backdrop);
 	document.addEventListener("keydown", onKeydown);
 	return { backdrop, close };
-};
-
-/** Convenience: show modal with a form and buttons */
-export const showFormModal = (
-	title: string,
-	fields: HTMLElement[],
-	buttons: { cancel: string; submit: string },
-	onSubmit: (e: SubmitEvent, close: () => void) => void
-): ModalResult => {
-	let closeModal: () => void = () => {};
-
-	const form = modalForm(fields, (e) => onSubmit(e, closeModal));
-	const footer = modalFooter([modalButtons(buttons.cancel, buttons.submit, () => closeModal(), form.id)]);
-	const result = showModal(title, [form], footer);
-	closeModal = result.close;
-
-	return result;
 };

@@ -4,7 +4,7 @@ import { joinSections } from "./prompt-utils";
 // (generation rules only; the skill's edit/detect modes and output format are left out).
 
 /** How the text should sound. Only for text the user posts or sends as themselves. */
-export const VOICE_RULES = `Write like a real person typing on LinkedIn, not like an AI assistant.
+const VOICE_RULES = `Write like a real person typing on LinkedIn, not like an AI assistant.
 
 ### Voice
 - Have a point of view. React to the content instead of neutrally listing pros and cons.
@@ -14,7 +14,7 @@ export const VOICE_RULES = `Write like a real person typing on LinkedIn, not lik
 - Keep it a little loose. Perfectly symmetrical structure reads as machine-made.`;
 
 /** Punctuation, wording and pattern rules that apply to every prompt. */
-export const CORE_RULES = `### Punctuation and formatting
+const CORE_RULES = `### Punctuation and formatting
 - No em dashes or en dashes. Use a period or a comma instead.
 - No colon as a dramatic setup ("The result: a faster app"). Just write the sentence.
 - Use straight quotes (" and '), never curly quotes.

@@ -121,15 +121,3 @@ export const UI = {
 		QUICK_REPLIES_BUTTON: "Quick replies",
 	},
 };
-
-export const THEME = {
-	LIGHT_HEX_LETTERS: "BCDEF".split("") as string[],
-};
-
-// Backwards-compatible aliases (temporarily) to reduce churn in imports.
-export const SELECTORS = DOM.SELECTORS;
-export const ATTR = DOM.ATTR;
-export const CLASS_NAMES = UI.CLASSES;
-export const UI_SVG = UI.SVG;
-export const TEXT = UI.TEXT;
-export const LIGHT_HEX_LETTERS = THEME.LIGHT_HEX_LETTERS;

@@ -8,6 +8,21 @@ type ElementAttrs<T extends HTMLElement> = Partial<Record<keyof T, unknown>> & {
 	[attr: `aria-${string}` | `data-${string}`]: string | number;
 };
 
+/** Sets one attribute: className, on* listener, hyphenated (aria-*, data-*) attribute, or JS property. */
+const applyAttr = (element: HTMLElement, key: string, value: unknown): void => {
+	if (value === undefined || value === null) return;
+	if (key === "className" && typeof value === "string") {
+		element.className = value;
+	} else if (key.startsWith("on") && typeof value === "function") {
+		element.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
+	} else if (key.includes("-")) {
+		// Hyphenated keys aren't real JS properties; they need setAttribute.
+		if (typeof value === "string" || typeof value === "number") element.setAttribute(key, String(value));
+	} else {
+		(element as unknown as Record<string, unknown>)[key] = value;
+	}
+};
+
 /** Generic element factory with attribute assignment */
 export const el = <K extends keyof HTMLElementTagNameMap>(
 	tag: K,
@@ -15,18 +30,7 @@ export const el = <K extends keyof HTMLElementTagNameMap>(
 	children: (Node | string)[] = []
 ): HTMLElementTagNameMap[K] => {
 	const element = document.createElement(tag);
-	for (const [key, value] of Object.entries(attrs)) {
-		if (key === "className" && typeof value === "string") {
-			element.className = value;
-		} else if (key.startsWith("on") && typeof value === "function") {
-			element.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
-		} else if (key.includes("-") && (typeof value === "string" || typeof value === "number")) {
-			// Hyphenated keys (aria-*, data-*) aren't real JS properties; they need setAttribute.
-			element.setAttribute(key, String(value));
-		} else if (value !== undefined && value !== null) {
-			(element as Record<string, unknown>)[key] = value;
-		}
-	}
+	for (const [key, value] of Object.entries(attrs)) applyAttr(element, key, value);
 	for (const child of children) {
 		element.append(child);
 	}

@@ -3,13 +3,6 @@
  */
 import { el, fieldset, labeled } from "./dom";
 
-/** Text input */
-export const textInput = (placeholder = "", value = "", type = "text"): HTMLInputElement => el("input", { type, placeholder, value, className: "la-input" });
-
-/** Number input */
-export const numberInput = (placeholder = "", value?: number): HTMLInputElement =>
-	el("input", { type: "number", placeholder, value: value?.toString() ?? "", className: "la-input" });
-
 /** Textarea */
 export const textArea = (value = "", readonly = false, placeholder = ""): HTMLTextAreaElement =>
 	el("textarea", { value, readOnly: readonly, placeholder, className: "la-textarea" });
@@ -31,19 +24,6 @@ export const updateOptions = (selectEl: HTMLSelectElement, options: readonly str
 	selectEl.innerHTML = "";
 	for (const opt of options) selectEl.append(el("option", { value: opt, textContent: opt || "(none)" }));
 	selectEl.value = options.includes(prev) ? prev : fallback;
-};
-
-/** Single checkbox with label */
-export const checkbox = (label: string, checked = false, name?: string): { el: HTMLLabelElement; input: HTMLInputElement } => {
-	const input = el("input", { type: "checkbox", checked, name, className: "la-checkbox" });
-	return { el: el("label", { className: "la-checkbox-row" }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
-};
-
-/** Single radio with label */
-export const radio = (name: string, value: string, label: string, checked = false): { el: HTMLLabelElement; input: HTMLInputElement } => {
-	const id = `la-${name}-${value}`;
-	const input = el("input", { type: "radio", name, value, checked, id, className: "la-checkbox" });
-	return { el: el("label", { className: "la-checkbox-row", htmlFor: id }, [input, el("span", { className: "la-checkbox-label" }, [label])]), input };
 };
 
 /**

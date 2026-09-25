@@ -2,9 +2,12 @@
  * Form pieces shared by the prompt modals that write about a post (comment, repost with thoughts):
  * the post preview, "your take" field, tone and length pills, fact-check switch and footer.
  */
+
+import type { z } from "zod";
 import type { Emotion } from "../lib";
 import { ALLOWED_EMOTIONS } from "../lib";
 import { el, modalButtons, modalFooter, pillGroup, textArea, toggleSwitch } from "./components";
+import { showNotice } from "./notice";
 
 const DEFAULT_EMOTION: Emotion = "thoughtful";
 
@@ -87,6 +90,21 @@ export const instructionsFields = (subject: string, placeholder: string) => {
 		isFactCheckOn: (): boolean => factCheck.isOn(),
 		getExtraInstructions: (): string | undefined => extra.value.trim() || undefined,
 	};
+};
+
+/**
+ * Validates the form options against `schema`. On success passes the parsed data to `onValid`;
+ * otherwise logs the issues and shows a notice. Returns whether it succeeded.
+ */
+export const submitIfValid = <T>(schema: z.ZodType<T>, options: T, onValid: (data: T) => void): boolean => {
+	const parsed = schema.safeParse(options);
+	if (!parsed.success) {
+		console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
+		showNotice("Some inputs need a look", "Check your take and the options, then generate the prompt again.");
+		return false;
+	}
+	onValid(parsed.data);
+	return true;
 };
 
 /** Footer with a short hint on the left and Cancel / submit on the right. */
