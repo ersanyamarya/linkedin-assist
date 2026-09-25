@@ -8,6 +8,7 @@ import {
 	createRepostPromptModal,
 	createTextModal,
 	type QuickRepliesPanel,
+	showNotice,
 } from "../ui";
 
 // const randomLightHexColor = (): string => {
@@ -318,7 +319,7 @@ const markCommentaryText = (editableTextArea: Element) => {
 const openMessagingPromptModal = (editableTextArea: Element) => {
 	const { senderName, messages } = extractMessagingThreadDetails();
 	if (!senderName && messages.length === 0) {
-		alert("Could not extract messaging thread details.");
+		showNotice("Couldn't read this conversation", "Wait for the messages to finish loading, then click the bulb again.");
 		return;
 	}
 
@@ -329,7 +330,7 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 			senderName,
 			messages,
 		});
-		alert("Extracted messaging data could not be validated.");
+		showNotice("Couldn't use this conversation's messages", "Something in them didn't look right. Reload the page and try again.");
 		return;
 	}
 
@@ -345,7 +346,7 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 				setEditableText(editableTextArea, result.text);
 				return;
 			}
-			createTextModal(result.text, "Generated Prompt");
+			createTextModal(result.text, "Your reply prompt is ready");
 		},
 	});
 };
@@ -353,7 +354,7 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 const openPostPromptModal = (editableTextArea: Element) => {
 	const { postText, comments } = extractPostDetails(editableTextArea);
 	if (!postText) {
-		alert("Could not extract post content.");
+		showNotice("Couldn't read this post", "LinkedIn may still be loading it. Scroll the post fully into view, then click the bulb again.");
 		return;
 	}
 
@@ -364,7 +365,7 @@ const openPostPromptModal = (editableTextArea: Element) => {
 			postText,
 			comments,
 		});
-		alert("Extracted post data could not be validated.");
+		showNotice("Couldn't use this post's text", "Something in it didn't look right. Reload the page and try again.");
 		return;
 	}
 
@@ -376,7 +377,7 @@ const openPostPromptModal = (editableTextArea: Element) => {
 		postText: parsed.data.postText,
 		comments: parsed.data.comments,
 		onSubmit: (options: CommentPromptOptions) => {
-			createTextModal(buildLinkedInCommentPrompt(options));
+			createTextModal(buildLinkedInCommentPrompt(options), "Your comment prompt is ready");
 		},
 	});
 };
@@ -391,7 +392,7 @@ const handleIdeaClick = (editableTextArea: Element) => {
 const openRepostPromptModal = (repostButton: Element) => {
 	const postText = extractPostContent(repostButton);
 	if (!postText) {
-		alert("Could not extract post content.");
+		showNotice("Couldn't read this post", "LinkedIn may still be loading it. Scroll the post fully into view, then click the bulb again.");
 		return;
 	}
 
@@ -401,7 +402,7 @@ const openRepostPromptModal = (repostButton: Element) => {
 			issues: parsed.error.issues,
 			postText,
 		});
-		alert("Extracted post data could not be validated.");
+		showNotice("Couldn't use this post's text", "Something in it didn't look right. Reload the page and try again.");
 		return;
 	}
 
@@ -409,7 +410,7 @@ const openRepostPromptModal = (repostButton: Element) => {
 	createRepostPromptModal({
 		postText: parsed.data.postText,
 		onSubmit: (options: RepostPromptOptions) => {
-			createTextModal(buildLinkedInRepostPrompt(options));
+			createTextModal(buildLinkedInRepostPrompt(options), "Your repost prompt is ready");
 		},
 	});
 };

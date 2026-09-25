@@ -2,6 +2,7 @@ import type { CommentPromptOptions } from "../lib";
 import { CommentPromptOptionsSchema } from "../lib";
 import { checkboxList, modalForm, showModal } from "./components";
 import { composeFooter, instructionsFields, lengthGroup, postPreview, toneGroup, yourTakeField } from "./compose-fields";
+import { showNotice } from "./notice";
 
 type CommentPromptModalArgs = {
 	readonly postText: string;
@@ -38,7 +39,7 @@ export const createPostCommentPromptModal = (args: CommentPromptModalArgs): void
 		const parsed = CommentPromptOptionsSchema.safeParse(options);
 		if (!parsed.success) {
 			console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
-			alert("Please review the inputs before generating the prompt.");
+			showNotice("Some inputs need a look", "Check your take and the options, then generate the prompt again.");
 			return;
 		}
 

@@ -2,6 +2,7 @@ import type { RepostPromptOptions } from "../lib";
 import { RepostPromptOptionsSchema } from "../lib";
 import { modalForm, showModal } from "./components";
 import { composeFooter, instructionsFields, lengthGroup, postPreview, toneGroup, yourTakeField } from "./compose-fields";
+import { showNotice } from "./notice";
 
 type RepostPromptModalArgs = {
 	readonly postText: string;
@@ -37,7 +38,7 @@ export const createRepostPromptModal = (args: RepostPromptModalArgs): void => {
 			const parsed = RepostPromptOptionsSchema.safeParse(options);
 			if (!parsed.success) {
 				console.warn("LinkedIn Assist repost prompt input validation failed:", parsed.error.issues);
-				alert("Please review the inputs before generating the prompt.");
+				showNotice("Some inputs need a look", "Check your take and the options, then generate the prompt again.");
 				return;
 			}
 

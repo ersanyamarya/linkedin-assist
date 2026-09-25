@@ -89,7 +89,7 @@ const createIdeaButton = (onClick: () => void): HTMLButtonElement => {
 
 const showJobModal = () => {
 	const snapshot = buildJobSnapshot();
-	createTextModal(JSON.stringify(snapshot, null, 2));
+	createTextModal(JSON.stringify(snapshot, null, 2), "Job details", "The details read from this job posting.");
 };
 
 /**

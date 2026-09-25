@@ -1,6 +1,6 @@
 import { DOM, ProfileSchema, UI } from "../lib";
 import { buildProfileSummaryPrompt } from "../prompt";
-import { createTextModal } from "../ui";
+import { createTextModal, showNotice } from "../ui";
 
 // Main profile page only (e.g. /in/jane-doe/), not sub-pages like /in/jane-doe/details/experience/.
 const PROFILE_PATH_PATTERN = /^\/in\/[^/]+\/?$/;
@@ -144,19 +144,19 @@ const openProfilePromptModal = async (button: HTMLButtonElement) => {
 
 	const snapshot = buildProfileSnapshot();
 	if (!(snapshot.name || snapshot.headline)) {
-		alert("Could not extract profile details.");
+		showNotice("Couldn't read this profile", "Wait for the profile to finish loading, then click the bulb again.");
 		return;
 	}
 
 	const parsed = ProfileSchema.safeParse(snapshot);
 	if (!parsed.success) {
 		console.warn("LinkedIn Assist profile schema validation failed:", { issues: parsed.error.issues, snapshot });
-		alert("Extracted profile data could not be validated.");
+		showNotice("Couldn't use this profile's details", "Something in them didn't look right. Reload the page and try again.");
 		return;
 	}
 
 	console.log("LinkedIn Assist extracted from profile:", parsed.data);
-	createTextModal(buildProfileSummaryPrompt(parsed.data), "Profile Summary Prompt");
+	createTextModal(buildProfileSummaryPrompt(parsed.data), "Your profile summary prompt is ready");
 };
 
 const createIdeaButton = (): HTMLButtonElement => {

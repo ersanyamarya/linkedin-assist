@@ -29,9 +29,12 @@ const closeIconButton = (onClose: () => void): HTMLButtonElement => {
 	return button;
 };
 
-/** Modal header (static title area) with a close (×) button */
-export const modalHeader = (title: string, onClose?: () => void): HTMLElement =>
-	el("header", { className: `${PREFIX}__header` }, [el("h2", { className: `${PREFIX}__title` }, [title]), ...(onClose ? [closeIconButton(onClose)] : [])]);
+/** Modal header (static title area, optional one-line subtitle) with a close (×) button */
+export const modalHeader = (title: string, onClose?: () => void, subtitle?: string): HTMLElement => {
+	const heading = el("h2", { className: `${PREFIX}__title` }, [title]);
+	const titleBlock = subtitle ? el("div", { className: `${PREFIX}__heading` }, [heading, el("p", { className: `${PREFIX}__subtitle` }, [subtitle])]) : heading;
+	return el("header", { className: `${PREFIX}__header` }, [titleBlock, ...(onClose ? [closeIconButton(onClose)] : [])]);
+};
 
 /** Modal body (scrollable content area) */
 export const modalBody = (children: (Node | string)[]): HTMLDivElement => el("div", { className: `${PREFIX}__body` }, children);
@@ -40,9 +43,9 @@ export const modalBody = (children: (Node | string)[]): HTMLDivElement => el("di
 export const modalFooter = (children: (Node | string)[]): HTMLElement => el("footer", { className: `${PREFIX}__footer` }, children);
 
 /** Modal container with header/body/footer structure */
-export const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement, onClose?: () => void): HTMLDivElement => {
+export const modalBox = (title: string, body: HTMLElement, footer?: HTMLElement, onClose?: () => void, subtitle?: string): HTMLDivElement => {
 	const children: HTMLElement[] = [];
-	if (title) children.push(modalHeader(title, onClose));
+	if (title) children.push(modalHeader(title, onClose, subtitle));
 	children.push(body);
 	if (footer) children.push(footer);
 	return el("div", { className: `${PREFIX}__box` }, children);
@@ -71,7 +74,7 @@ export const modalButtons = (cancelText: string, submitText: string, onCancel: (
 type ModalResult = { backdrop: HTMLDivElement; close: () => void };
 
 /** Full modal assembly with header/body/footer layout */
-export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HTMLElement): ModalResult => {
+export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HTMLElement, subtitle?: string): ModalResult => {
 	const onKeydown = (e: KeyboardEvent) => e.key === "Escape" && close();
 	const close = () => {
 		backdrop.remove();
@@ -79,7 +82,7 @@ export const showModal = (title: string, bodyContent: HTMLElement[], footer?: HT
 	};
 	const backdrop = modalBackdrop(close);
 	const body = modalBody(bodyContent);
-	const box = modalBox(title, body, footer, close);
+	const box = modalBox(title, body, footer, close, subtitle);
 	backdrop.append(box);
 	document.body.append(backdrop);
 	document.addEventListener("keydown", onKeydown);

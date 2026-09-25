@@ -822,6 +822,154 @@
 	border-radius: 8px;
 }
 
+.la-modal__heading {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.la-modal__subtitle {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--la-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Prompt result window
+   -------------------------------------------------------------------------- */
+.la-prompt-panel {
+	box-sizing: border-box;
+	height: min(400px, 50vh);
+	padding: 14px 16px;
+	overflow-y: auto;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: var(--la-text);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	background: #f7f6f3;
+	border: 1px solid var(--la-border-light);
+	border-radius: var(--la-radius-lg);
+}
+
+.la-prompt-panel:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 1px;
+}
+
+.la-btn--icon {
+	display: inline-flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.la-btn--primary.la-btn--success,
+.la-btn--primary.la-btn--success:hover {
+	background: #057642;
+}
+
+/* --------------------------------------------------------------------------
+   Notice — replaces blocking browser alerts
+   -------------------------------------------------------------------------- */
+.la-notice {
+	position: fixed;
+	bottom: 24px;
+	left: 50%;
+	z-index: 10001;
+	box-sizing: border-box;
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	width: min(460px, calc(100vw - 32px));
+	padding: 14px 12px 14px 16px;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+	color: var(--la-text);
+	background: var(--la-bg);
+	border: 1px solid var(--la-border-light);
+	border-radius: 12px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+	transform: translateX(-50%);
+	animation: la-notice-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* With a modal open (e.g. a form validation notice), sit at the top so the modal's buttons stay clear. */
+.la-modal ~ .la-notice {
+	top: 24px;
+	bottom: auto;
+}
+
+@keyframes la-notice-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+}
+
+.la-notice__icon {
+	display: flex;
+	flex-shrink: 0;
+	margin-top: 1px;
+	color: #b24020;
+}
+
+.la-notice__text {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.la-notice__title {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.la-notice__message {
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--la-text-muted);
+}
+
+.la-notice__dismiss {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	color: var(--la-text-muted);
+	cursor: pointer;
+	background: transparent;
+	border: none;
+	border-radius: 50%;
+}
+
+.la-notice__dismiss:hover {
+	background: var(--la-bg-muted);
+}
+
+.la-notice__dismiss:focus-visible {
+	outline: 2px solid var(--la-primary);
+	outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.la-notice {
+		animation: none;
+	}
+}
+
 .la-post-preview {
 	display: flex;
 	flex-direction: column;
