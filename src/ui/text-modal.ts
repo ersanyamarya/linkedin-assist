@@ -2,7 +2,8 @@
  * Result window for a generated prompt: the text in a scrollable panel with a word count,
  * and a Copy button that confirms the copy. When an OpenAI-compatible API is set up in the
  * options, a Generate button streams the AI's answer into the same panel, with Copy, Insert
- * (when the caller has an editor to fill) and Regenerate.
+ * (when the caller has an editor to fill) and Regenerate. The prompt is editable, and a step bar
+ * (Inputs › Prompt › Answer) jumps back to earlier steps, including the form that built it.
  */
 import { type AiStatus, generateReply, getAiStatus, openAiSettings } from "../lib/ai-bridge";
 import { btn, el, modalFooter, showModal } from "./components";
@@ -60,7 +61,7 @@ const iconButton = (icon: string, label: string, variant: "primary" | "secondary
 };
 
 type TextModalOptions = {
-	/** Offer AI generation when it's configured. Off for windows that don't hold a prompt. */
+	/** Offer AI generation when it's configured, and let the user edit the prompt. Off for windows that don't hold a prompt. */
 	generate?: boolean;
 	/** Reopens the form that built this prompt. Without it the prompt view has Close instead of Back. */
 	onBack?: () => void;
@@ -68,19 +69,32 @@ type TextModalOptions = {
 	onInsert?: (text: string) => void;
 };
 
+type Step = "inputs" | "prompt" | "answer";
+
+const STEP_LABELS: Record<Step, string> = { inputs: "Inputs", prompt: "Prompt", answer: "Answer" };
+
 export const createTextModal = (
 	text: string,
 	title = "Your prompt is ready",
 	subtitle = DEFAULT_SUBTITLE,
 	{ generate = true, onBack, onInsert }: TextModalOptions = {}
 ): void => {
-	const normalizedText = text.replace(EXTRA_BLANK_LINES, "\n\n");
+	const originalPrompt = text.replace(EXTRA_BLANK_LINES, "\n\n");
 
+	const steps = el("nav", { className: "la-steps", "aria-label": "Steps" });
 	const label = el("span", { className: "la-label" });
 	const stats = el("small", { className: "la-hint" });
-	const panel = el("div", { className: "la-prompt-panel", tabIndex: 0 });
-	panel.setAttribute("aria-label", title);
-	const content = el("div", { className: "la-field la-compose" }, [el("div", { className: "la-field__header" }, [label, stats]), panel]);
+	const resetLink = el("button", { type: "button", className: "la-link", hidden: true }, ["Undo edits"]);
+	const promptInput = el("textarea", { className: "la-prompt-panel", value: originalPrompt, readOnly: !generate, spellcheck: false });
+	promptInput.setAttribute("aria-label", title);
+	const answerPanel = el("div", { className: `la-prompt-panel ${OUTPUT_CLASS}`, tabIndex: 0, hidden: true });
+	answerPanel.setAttribute("aria-label", "Generated answer");
+	const content = el("div", { className: "la-field la-compose" }, [
+		steps,
+		el("div", { className: "la-field__header" }, [label, el("span", { className: "la-field__meta" }, [resetLink, stats])]),
+		promptInput,
+		answerPanel,
+	]);
 
 	const hint = el("small", { className: "la-hint" });
 	const actions = el("div", { className: "la-modal__actions" });
@@ -93,31 +107,66 @@ export const createTextModal = (
 	};
 	const { close } = showModal(title, [content], footer, subtitle, stop);
 
-	// With a form behind this prompt, "Back" returns to it to tweak the inputs; × still closes both.
-	const closeBtn = btn(onBack ? "Back" : "Close", "secondary");
-	closeBtn.addEventListener("click", () => {
-		close();
-		onBack?.();
+	let aiStatus: AiStatus | undefined;
+	let view: Step = "prompt";
+	let answer = "";
+
+	const getPrompt = () => promptInput.value;
+	const isEdited = () => getPrompt() !== originalPrompt;
+	const syncPromptMeta = () => {
+		stats.textContent = describeLength(getPrompt());
+		resetLink.hidden = !isEdited();
+	};
+	promptInput.addEventListener("input", syncPromptMeta);
+	resetLink.addEventListener("click", () => {
+		promptInput.value = originalPrompt;
+		syncPromptMeta();
+		promptInput.focus();
 	});
 
-	let aiStatus: AiStatus | undefined;
-	let view: "prompt" | "output" = "prompt";
+	/** Closes this window and reopens the form, after confirming if the prompt was edited. */
+	const backToInputs = () => {
+		if (isEdited() && !window.confirm("Go back to the inputs? Your edits to this prompt will be lost.")) return;
+		close();
+		onBack?.();
+	};
+
+	const renderSteps = () => {
+		const available: Step[] = [...(onBack ? (["inputs"] as const) : []), "prompt", ...(aiStatus?.configured ? (["answer"] as const) : [])];
+		steps.hidden = available.length < 2;
+		steps.replaceChildren(
+			...available.map((step, index) => {
+				const button = el("button", { type: "button", className: "la-steps__step" }, [`${index + 1}. ${STEP_LABELS[step]}`]);
+				if (step === view) button.setAttribute("aria-current", "step");
+				button.disabled = step === view || (step === "answer" && !answer);
+				button.addEventListener("click", () => {
+					if (step === "inputs") backToInputs();
+					else if (step === "prompt") showPrompt();
+					else showAnswer(false);
+				});
+				return button;
+			})
+		);
+	};
 
 	const showPrompt = () => {
 		stop();
 		view = "prompt";
-		label.textContent = "Prompt";
-		panel.classList.remove(OUTPUT_CLASS);
-		panel.textContent = normalizedText;
-		stats.textContent = describeLength(normalizedText);
+		label.textContent = generate ? "Prompt · editable" : "Details";
+		promptInput.hidden = false;
+		answerPanel.hidden = true;
+		syncPromptMeta();
+		renderSteps();
 
+		const backBtn = btn(onBack ? "Back" : "Close", "secondary");
+		backBtn.addEventListener("click", onBack ? backToInputs : close);
 		const canGenerate = Boolean(aiStatus?.configured);
-		const copyBtn = copyButton(() => normalizedText, "Copy prompt", canGenerate ? "secondary" : "primary");
+		const copyBtn = copyButton(getPrompt, generate ? "Copy prompt" : "Copy", canGenerate ? "secondary" : "primary");
 		if (canGenerate) {
 			const generateBtn = iconButton(SPARKLE_ICON, "Generate", "primary");
-			generateBtn.addEventListener("click", showOutput);
-			hint.textContent = `Copy it, or generate the answer with ${aiStatus?.model}.`;
-			actions.replaceChildren(closeBtn, copyBtn, generateBtn);
+			generateBtn.addEventListener("click", () => showAnswer(true));
+			hint.textContent = `Edit it if you like, then copy it or generate the answer with ${aiStatus?.model}.`;
+			actions.replaceChildren(backBtn, copyBtn, generateBtn);
 			generateBtn.focus();
 			return;
 		}
@@ -128,65 +177,76 @@ export const createTextModal = (
 			setupLink.addEventListener("click", openAiSettings);
 			hint.append(" ", setupLink);
 		}
-		actions.replaceChildren(closeBtn, copyBtn);
+		actions.replaceChildren(backBtn, copyBtn);
 		copyBtn.focus();
 	};
 
-	const showOutput = () => {
+	/** Shows the answer view; `regenerate` starts a new request, otherwise the last answer is shown as is. */
+	const showAnswer = (regenerate: boolean) => {
 		stop();
-		view = "output";
-		let output = "";
-		let busy = true;
+		view = "answer";
+		let busy = false;
 
 		label.textContent = `Answer · ${aiStatus?.model}`;
-		panel.classList.add(OUTPUT_CLASS);
-		panel.textContent = "";
-		stats.textContent = "Generating...";
+		promptInput.hidden = true;
+		answerPanel.hidden = false;
+		resetLink.hidden = true;
 		hint.textContent = `Sent to ${aiStatus?.host}. Read it before you post.`;
 
 		const backBtn = btn("Back to prompt", "secondary");
 		backBtn.addEventListener("click", showPrompt);
-		const stopBtn = btn("Stop", "secondary");
-		const copyBtn = copyButton(() => output, "Copy", onInsert ? "secondary" : "primary");
+		const regenerateBtn = btn("Regenerate", "secondary");
+		const copyBtn = copyButton(() => answer, "Copy", onInsert ? "secondary" : "primary");
 		const insertBtn = onInsert ? btn("Insert", "primary") : undefined;
 		insertBtn?.addEventListener("click", () => {
-			onInsert?.(output);
+			onInsert?.(answer);
 			close();
 		});
 
 		const setBusy = (value: boolean) => {
 			busy = value;
-			stopBtn.textContent = busy ? "Stop" : "Regenerate";
-			copyBtn.disabled = busy || !output;
-			if (insertBtn) insertBtn.disabled = busy || !output;
-			panel.setAttribute("aria-busy", String(busy));
+			regenerateBtn.textContent = busy ? "Stop" : "Regenerate";
+			copyBtn.disabled = busy || !answer;
+			if (insertBtn) insertBtn.disabled = busy || !answer;
+			answerPanel.setAttribute("aria-busy", String(busy));
+			renderSteps();
 		};
 		const finish = (message: string) => {
 			stopGenerating = undefined;
 			setBusy(false);
-			stats.textContent = output ? describeLength(output) : message;
-			(insertBtn && !insertBtn.disabled ? insertBtn : stopBtn).focus();
+			stats.textContent = answer ? describeLength(answer) : message;
+			(insertBtn && !insertBtn.disabled ? insertBtn : regenerateBtn).focus();
 		};
-		stopBtn.addEventListener("click", () => {
+		regenerateBtn.addEventListener("click", () => {
 			if (!busy) {
-				showOutput();
+				showAnswer(true);
 				return;
 			}
 			stop();
 			finish("Stopped");
 		});
 
-		actions.replaceChildren(backBtn, stopBtn, copyBtn, ...(insertBtn ? [insertBtn] : []));
-		setBusy(true);
-		stopBtn.focus();
+		actions.replaceChildren(backBtn, regenerateBtn, copyBtn, ...(insertBtn ? [insertBtn] : []));
 
-		stopGenerating = generateReply(normalizedText, {
+		if (!regenerate) {
+			answerPanel.textContent = answer;
+			finish("");
+			return;
+		}
+
+		answer = "";
+		answerPanel.textContent = "";
+		stats.textContent = "Generating...";
+		setBusy(true);
+		regenerateBtn.focus();
+
+		stopGenerating = generateReply(getPrompt(), {
 			onDelta: (delta) => {
-				const atBottom = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 24;
-				output += delta;
-				panel.textContent = output;
-				stats.textContent = describeLength(output);
-				if (atBottom) panel.scrollTop = panel.scrollHeight;
+				const atBottom = answerPanel.scrollHeight - answerPanel.scrollTop - answerPanel.clientHeight < 24;
+				answer += delta;
+				answerPanel.textContent = answer;
+				stats.textContent = describeLength(answer);
+				if (atBottom) answerPanel.scrollTop = answerPanel.scrollHeight;
 			},
 			onDone: () => finish("The server sent an empty answer."),
 			onError: (message) => {
@@ -200,6 +260,6 @@ export const createTextModal = (
 	if (!generate) return;
 	getAiStatus().then((status) => {
 		aiStatus = status;
-		if (view === "prompt" && panel.isConnected) showPrompt();
+		if (view === "prompt" && promptInput.isConnected) showPrompt();
 	});
 };

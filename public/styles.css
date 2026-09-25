@@ -855,6 +855,63 @@
 	border-radius: var(--la-radius-lg);
 }
 
+textarea.la-prompt-panel {
+	display: block;
+	width: 100%;
+	margin: 0;
+	resize: vertical;
+}
+
+textarea.la-prompt-panel:not([readonly]):focus {
+	outline: none;
+	border-color: var(--la-primary);
+	box-shadow: 0 0 0 3px var(--la-primary-tint);
+}
+
+.la-field__meta {
+	display: inline-flex;
+	gap: 10px;
+	align-items: baseline;
+}
+
+.la-field__meta .la-link {
+	font-size: 12px;
+}
+
+.la-steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 4px;
+}
+
+.la-steps__step {
+	padding: 4px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--la-primary);
+	cursor: pointer;
+	background: var(--la-bg);
+	border: 1px solid var(--la-border-light);
+	border-radius: 999px;
+}
+
+.la-steps__step:hover:not(:disabled) {
+	background: var(--la-primary-tint);
+}
+
+.la-steps__step[aria-current="step"] {
+	color: var(--la-primary-contrast);
+	cursor: default;
+	background: var(--la-primary);
+	border-color: var(--la-primary);
+}
+
+.la-steps__step:disabled:not([aria-current]) {
+	color: var(--la-text-muted);
+	cursor: default;
+}
+
 .la-prompt-panel:focus-visible {
 	outline: 2px solid var(--la-primary);
 	outline-offset: 1px;
