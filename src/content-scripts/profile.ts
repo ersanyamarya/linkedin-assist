@@ -1,6 +1,6 @@
-import { DOM, normalizeWhitespace, ProfileSchema, UI } from "../lib";
-import { buildProfileSummaryPrompt } from "../prompt";
-import { createIdeaButton, createTextModal, showNotice } from "../ui";
+import { DOM, loadVoiceSamples, normalizeWhitespace, type Profile, ProfileSchema, UI } from "../lib";
+import { buildConnectionNotePrompt, buildProfileSummaryPrompt } from "../prompt";
+import { createConnectionNoteModal, createIdeaButton, createTextModal, showNotice } from "../ui";
 
 // Main profile page only (e.g. /in/jane-doe/), not sub-pages like /in/jane-doe/details/experience/.
 const PROFILE_PATH_PATTERN = /^\/in\/[^/]+\/?$/;
@@ -132,7 +132,8 @@ const buildProfileSnapshot = () => {
 	};
 };
 
-const openProfilePromptModal = async (button: HTMLButtonElement) => {
+/** Scrolls the profile fully into existence, reads it, and validates it. Shows a notice and returns undefined on failure. */
+const readProfile = async (button: HTMLButtonElement): Promise<Profile | undefined> => {
 	button.disabled = true;
 	try {
 		await loadLazySections();
@@ -154,12 +155,39 @@ const openProfilePromptModal = async (button: HTMLButtonElement) => {
 	}
 
 	console.log("LinkedIn Assist extracted from profile:", parsed.data);
-	createTextModal(buildProfileSummaryPrompt(parsed.data), "Your profile summary prompt is ready");
+	return parsed.data;
+};
+
+const openProfilePromptModal = async (button: HTMLButtonElement) => {
+	const profile = await readProfile(button);
+	if (profile) createTextModal(buildProfileSummaryPrompt(profile), "Your profile summary prompt is ready");
+};
+
+const openConnectionNoteModal = async (button: HTMLButtonElement) => {
+	const profile = await readProfile(button);
+	if (!profile) return;
+
+	const voiceSamples = await loadVoiceSamples();
+	createConnectionNoteModal({
+		profile,
+		onSubmit: (options, reopen) => {
+			createTextModal(buildConnectionNotePrompt({ ...options, voiceSamples }), "Your connection note prompt is ready", undefined, {
+				onBack: reopen,
+				maxChars: options.maxChars,
+			});
+		},
+	});
 };
 
 const createProfileIdeaButton = (): HTMLButtonElement => {
 	const button = createIdeaButton(openProfilePromptModal, UI.TEXT.PROFILE_IDEA_BUTTON);
 	button.setAttribute(DOM.ATTR.DATA_PROFILE_IDEA, "true");
+	return button;
+};
+
+const createConnectionNoteButton = (): HTMLButtonElement => {
+	const button = createIdeaButton(openConnectionNoteModal, UI.TEXT.CONNECTION_NOTE_BUTTON, UI.SVG.CONNECT);
+	button.setAttribute(DOM.ATTR.DATA_PROFILE_NOTE, "true");
 	return button;
 };
 
@@ -181,26 +209,32 @@ const findActionRowItem = (actionButton: Element): Element => {
 	return actionButton;
 };
 
+const findProfileButton = (attr: string): Element | null => document.querySelector(`.${UI.CLASSES.IDEA_BUTTON}[${attr}]`);
+
 /**
- * Places the idea button in the profile's action row (Message / Connect / More).
- * Falls back to sitting next to the name when the action row can't be found.
+ * Places the idea buttons in the profile's action row (Message / Connect / More): the profile
+ * summary button, then the connection-note button right after it. Falls back to sitting next to
+ * the name when the action row can't be found.
  */
-const attachIdeaButton = () => {
-	if (document.querySelector(`.${UI.CLASSES.IDEA_BUTTON}[${DOM.ATTR.DATA_PROFILE_IDEA}]`)) return;
+const attachIdeaButtons = () => {
+	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)) {
+		const actions = queryFirst(DOM.SELECTORS.PROFILE_ACTIONS_SELECTORS);
+		const actionButton = actions ? null : queryFirst(DOM.SELECTORS.PROFILE_ACTION_BUTTON_FALLBACKS);
+		const nameHeading = findSection(getProfileName())?.querySelector(DOM.SELECTORS.PROFILE_SECTION_HEADING);
 
-	const actions = queryFirst(DOM.SELECTORS.PROFILE_ACTIONS_SELECTORS);
-	const actionButton = actions ? null : queryFirst(DOM.SELECTORS.PROFILE_ACTION_BUTTON_FALLBACKS);
-	const nameHeading = findSection(getProfileName())?.querySelector(DOM.SELECTORS.PROFILE_SECTION_HEADING);
+		if (actions) actions.append(createProfileIdeaButton());
+		else if (actionButton) findActionRowItem(actionButton).insertAdjacentElement("afterend", createProfileIdeaButton());
+		else if (nameHeading) nameHeading.insertAdjacentElement("afterend", createProfileIdeaButton());
+	}
 
-	if (actions) actions.append(createProfileIdeaButton());
-	else if (actionButton) findActionRowItem(actionButton).insertAdjacentElement("afterend", createProfileIdeaButton());
-	else if (nameHeading) nameHeading.insertAdjacentElement("afterend", createProfileIdeaButton());
+	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_NOTE))
+		findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)?.insertAdjacentElement("afterend", createConnectionNoteButton());
 };
 
 // LinkedIn is a single-page app, so this script runs on every page and checks the path on each
 // DOM change; the button appears whenever the user navigates to a profile.
 const observer = new MutationObserver(() => {
-	if (isProfilePage()) attachIdeaButton();
+	if (isProfilePage()) attachIdeaButtons();
 });
 
 observer.observe(document.body, { childList: true, subtree: true });

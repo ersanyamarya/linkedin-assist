@@ -1,4 +1,5 @@
-import { joinSections } from "./prompt-utils";
+import { BANNED_WORDS } from "../lib";
+import { asFencedBlock, joinSections } from "./prompt-utils";
 
 // Shared writing rules for every prompt. Condensed from `.claude/skills/humanize-and-unslop/SKILL.md`
 // (generation rules only; the skill's edit/detect modes and output format are left out).
@@ -22,7 +23,7 @@ const CORE_RULES = `### Punctuation and formatting
 - No bold, headings or bullet lists unless the output section asks for them.
 
 ### Banned words
-delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutting-edge, game changer, paradigm shift, tapestry, realm, beacon, landscape, multifaceted, meticulous, intricate, paramount, pivotal, crucial, transformative, elevate, embark, supercharge, harness, ever-evolving, enhance, garner, interplay, showcase, testament, underscore, vibrant.
+${BANNED_WORDS.join(", ")}.
 
 ### Patterns to avoid
 - Puffery like "stands as a testament" or "plays a vital role". State the fact.
@@ -38,9 +39,19 @@ delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutti
 
 Before answering, reread your draft and fix anything that still sounds AI-generated. Output only the final text.`;
 
+/** The user's own writing, fenced, so the model matches their rhythm and word choice. Omitted when there are none. */
+const buildVoiceSamplesBlock = (samples: readonly string[] | undefined): string =>
+	samples?.length
+		? joinSections([
+				asFencedBlock("My writing samples", samples.map((sample, index) => `${index + 1}. ${sample}`).join("\n\n")),
+				"Match the voice of these samples: sentence length, word choice, how formal or loose they are. Don't copy their content or phrases.",
+			])
+		: "";
+
 /**
  * Writing rules as a plain section (not fenced, so the model reads them as instructions, not input).
- * Pass `{ voice: false }` for factual output such as the profile summary.
+ * Pass `{ voice: false }` for factual output such as the profile summary. `voiceSamples` are the
+ * user's own past writing, added so the output sounds like them.
  */
-export const buildSystemBlock = ({ voice = true }: { voice?: boolean } = {}): string =>
-	joinSections(["## Writing rules", voice ? VOICE_RULES : "", CORE_RULES]);
+export const buildSystemBlock = ({ voice = true, voiceSamples }: { voice?: boolean; voiceSamples?: readonly string[] } = {}): string =>
+	joinSections(["## Writing rules", voice ? VOICE_RULES : "", CORE_RULES, voice ? buildVoiceSamplesBlock(voiceSamples) : ""]);

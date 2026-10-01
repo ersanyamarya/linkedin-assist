@@ -6,8 +6,17 @@
 
 export const AI_GENERATE_PORT = "la-generate";
 
-export type AiStatus = { configured: boolean; model?: string; host?: string };
-export type AiRuntimeMessage = { type: "ai-status" } | { type: "open-options" };
+export type AiProviderSummary = { id: string; name: string; model: string };
+/** What content scripts may know about the setup: never the token or the full URL. */
+export type AiStatus = {
+	configured: boolean;
+	activeId?: string;
+	providerName?: string;
+	model?: string;
+	host?: string;
+	providers?: AiProviderSummary[];
+};
+export type AiRuntimeMessage = { type: "ai-status" } | { type: "ai-set-active"; id: string } | { type: "open-options" };
 export type GenerateRequest = { prompt: string };
 export type GenerateEvent = { type: "delta"; text: string } | { type: "done" } | { type: "error"; message: string };
 
@@ -19,6 +28,15 @@ export const getAiStatus = async (): Promise<AiStatus> => {
 		return ((await chrome.runtime.sendMessage({ type: "ai-status" } satisfies AiRuntimeMessage)) as AiStatus | undefined) ?? NOT_CONFIGURED;
 	} catch {
 		return NOT_CONFIGURED;
+	}
+};
+
+/** Makes `id` the provider in use. Resolves to the new status, or undefined if the worker couldn't be reached. */
+export const setActiveProvider = async (id: string): Promise<AiStatus | undefined> => {
+	try {
+		return (await chrome.runtime.sendMessage({ type: "ai-set-active", id } satisfies AiRuntimeMessage)) as AiStatus | undefined;
+	} catch {
+		return;
 	}
 };
 

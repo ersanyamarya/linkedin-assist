@@ -77,12 +77,15 @@ export type Emotion = z.infer<typeof EmotionsSchema>;
 export const CommentPromptOptionsSchema = z
 	.object({
 		postText: z.string(),
+		/** The comment being answered, when the editor is a reply box under a comment. */
+		replyTo: z.string().optional(),
 		selectedComments: z.array(z.string()),
 		yourThoughts: z.string(),
 		emotion: EmotionsSchema,
 		maxLengthWords: z.number().optional(),
 		factCheck: z.boolean().optional(),
 		extraInstructions: z.string().optional(),
+		voiceSamples: z.array(z.string()).optional(),
 	})
 	.strict();
 
@@ -96,10 +99,27 @@ export const RepostPromptOptionsSchema = z
 		maxLengthWords: z.number().optional(),
 		factCheck: z.boolean().optional(),
 		extraInstructions: z.string().optional(),
+		voiceSamples: z.array(z.string()).optional(),
 	})
 	.strict();
 
 export type RepostPromptOptions = z.infer<typeof RepostPromptOptionsSchema>;
+
+/** LinkedIn caps a connection note at 200 characters, or 300 with Premium. */
+export const CONNECTION_NOTE_LIMITS = [200, 300] as const;
+
+export const ConnectionNotePromptOptionsSchema = z
+	.object({
+		profile: ProfileSchema,
+		yourThoughts: z.string(),
+		emotion: EmotionsSchema,
+		maxChars: z.number(),
+		extraInstructions: z.string().optional(),
+		voiceSamples: z.array(z.string()).optional(),
+	})
+	.strict();
+
+export type ConnectionNotePromptOptions = z.infer<typeof ConnectionNotePromptOptionsSchema>;
 
 export const ALLOWED_TONES = ["friendly", "professional", "casual", "direct", "warm"] as const;
 export const TonesSchema = z.enum(ALLOWED_TONES);
@@ -127,6 +147,7 @@ export const MessagePromptOptionsSchema = z
 		formality: FormalitiesSchema.optional(),
 		includeCTA: z.boolean().optional(),
 		extraInstructions: z.string().optional(),
+		voiceSamples: z.array(z.string()).optional(),
 	})
 	.strict();
 

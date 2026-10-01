@@ -59,12 +59,27 @@ export const findCommentaryTextElement = (anchor: Element): Element | null => {
 };
 
 /**
- * Extracts text from a comment commentary element.
+ * Finds the element holding each comment's text within the feed item, in document order.
+ * Works on both feed list and single post pages.
  */
-const extractCommentaryText = (commentary: Element): string => {
-	const textElement = commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary;
-	return (textElement.textContent ?? "").trim();
+const findCommentTextElements = (container: Element): Element[] => {
+	const commentaries = Array.from(container.querySelectorAll(DOM.SELECTORS.COMMENT_COMMENTARY));
+	if (commentaries.length > 0) return commentaries.map((commentary) => commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary);
+
+	const singlePostComments = Array.from(container.querySelectorAll(DOM.SELECTORS.SINGLE_POST_COMMENT));
+	if (singlePostComments.length > 0) {
+		return singlePostComments
+			.map((article) => article.querySelector(DOM.SELECTORS.SINGLE_POST_COMMENT_CONTENT))
+			.filter((content): content is Element => content !== null);
+	}
+
+	// Structural fallback for the no-data-view-name feed variant: every expandable-text-box
+	// inside the comment list wrapper is a comment (or reply).
+	const commentList = container.querySelector(DOM.SELECTORS.POST_COMMENT_LIST);
+	return commentList ? Array.from(commentList.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX)) : [];
 };
+
+const textOf = (element: Element): string => (element.textContent ?? "").trim();
 
 /**
  * Extracts comment text from the comment list within the same feed item.
@@ -74,31 +89,29 @@ const extractPostComments = (anchor: Element): string[] => {
 	const container = findFeedContainer(anchor);
 	if (!container) return [];
 
-	const commentaries = Array.from(container.querySelectorAll(DOM.SELECTORS.COMMENT_COMMENTARY));
-
-	if (commentaries.length > 0) {
-		return commentaries.map(extractCommentaryText).filter((comment) => comment.length > 0);
-	}
-
-	const singlePostComments = Array.from(container.querySelectorAll(DOM.SELECTORS.SINGLE_POST_COMMENT));
-
-	if (singlePostComments.length > 0) {
-		return singlePostComments
-			.map((article) => {
-				const contentDiv = article.querySelector(DOM.SELECTORS.SINGLE_POST_COMMENT_CONTENT);
-				return contentDiv?.textContent?.trim() ?? "";
-			})
-			.filter((comment) => comment.length > 0);
-	}
-
-	// Structural fallback for the no-data-view-name feed variant: every expandable-text-box
-	// inside the comment list wrapper is a comment (or reply).
-	const commentList = container.querySelector(DOM.SELECTORS.POST_COMMENT_LIST);
-	if (!commentList) return [];
-
-	return Array.from(commentList.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX))
-		.map(extractCommentaryText)
+	return findCommentTextElements(container)
+		.map(textOf)
 		.filter((comment) => comment.length > 0);
+};
+
+/**
+ * The comment a reply editor answers, or undefined when the editor is the post's own comment box.
+ * LinkedIn's classes are hashed, so this goes by position: a reply box opens right after the comment
+ * (and any earlier replies) it belongs to, while the top-level comment box sits above every comment.
+ * So the last comment that comes before the editor in the page is the one being answered.
+ */
+export const extractReplyTarget = (anchor: Element): string | undefined => {
+	const container = findFeedContainer(anchor);
+	if (!container) return;
+
+	const preceding = findCommentTextElements(container).filter(
+		(comment) =>
+			!comment.contains(anchor) && // biome-ignore lint/suspicious/noBitwiseOperators: compareDocumentPosition returns a bitmask
+			comment.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING &&
+			textOf(comment).length > 0
+	);
+	const target = preceding.at(-1);
+	return target ? textOf(target) : undefined;
 };
 
 /**

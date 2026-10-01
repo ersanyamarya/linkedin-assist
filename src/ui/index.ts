@@ -1,3 +1,4 @@
+export * from "./connection-note-modal";
 export * from "./idea-button";
 export * from "./message-reply-modal";
 export * from "./notice";

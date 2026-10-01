@@ -25,10 +25,10 @@ const buildOutputBlock = (): string =>
 	]);
 
 const buildPromptParts = (options: RepostPromptOptions): readonly string[] => {
-	const { postText, yourThoughts, emotion, maxLengthWords, factCheck, extraInstructions } = options;
+	const { postText, yourThoughts, emotion, maxLengthWords, factCheck, extraInstructions, voiceSamples } = options;
 
 	return [
-		buildSystemBlock(),
+		buildSystemBlock({ voiceSamples }),
 		buildTaskBlock(),
 		buildPostBlock(postText),
 		buildTakeBlock("caption", yourThoughts),

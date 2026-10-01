@@ -89,6 +89,7 @@ export const DOM = {
 		DATA_JOB_IDEA: "data-la-job-idea",
 		DATA_REPOST_IDEA: "data-la-repost-idea",
 		DATA_PROFILE_IDEA: "data-la-profile-idea",
+		DATA_PROFILE_NOTE: "data-la-profile-note",
 	},
 };
 
@@ -106,6 +107,9 @@ export const UI = {
 		// Outline weight and proportions match LinkedIn's own toolbar icons (emoji, GIF, photo)
 		// so the button reads as part of their UI instead of a foreign glyph.
 		IDEA: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.3h6c0-1.1.4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>',
+		// User-plus glyph, drawn like IDEA, so the connection-note button next to the bulb reads as a different action.
+		CONNECT:
+			'<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>',
 		CLOSE:
 			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
 	},
@@ -118,6 +122,7 @@ export const UI = {
 		CANCEL_BUTTON: "Cancel",
 		REPOST_IDEA_BUTTON: "Draft a repost with your thoughts",
 		PROFILE_IDEA_BUTTON: "Generate a brief profile of this person",
+		CONNECTION_NOTE_BUTTON: "Draft a connection note for this person",
 		QUICK_REPLIES_BUTTON: "Quick replies",
 	},
 };

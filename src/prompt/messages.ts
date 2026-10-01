@@ -80,7 +80,7 @@ const buildOutputBlock = (): string =>
 	joinSections(["## Output", "Only the message text, ready to paste. No quotes around it and no email-style sign-off, since this is a chat thread."]);
 
 const buildPromptParts = (data: Messages, options: MessagePromptOptions): readonly string[] => [
-	buildSystemBlock(),
+	buildSystemBlock({ voiceSamples: options.voiceSamples }),
 	buildTaskBlock(options.recipientName, data.senderName),
 	buildMessagesBlock(data.messages, options),
 	buildGuidanceBlock("Goal", intentGuidance, options.intent),

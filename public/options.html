@@ -12,12 +12,27 @@
 			<header>
 				<h1 class="la-options__title">LinkedIn Assist</h1>
 				<p class="la-hint">
-					Optional. Connect an OpenAI-compatible API to generate replies inside LinkedIn instead of copying the prompt into another AI chat.
+					Optional. Connect one or more OpenAI-compatible APIs to generate replies inside LinkedIn instead of copying the prompt into another AI chat.
 				</p>
 			</header>
 
+			<section class="la-options__card" aria-labelledby="providers-heading">
+				<div class="la-options__heading-row">
+					<h2 id="providers-heading" class="la-options__heading">Providers</h2>
+					<button id="add-provider" class="la-btn la-btn--secondary" type="button">Add provider</button>
+				</div>
+				<div id="provider-list" class="la-providers" role="radiogroup" aria-label="Provider in use"></div>
+				<p id="empty" class="la-hint">No providers yet. Fill in the form below to add one.</p>
+			</section>
+
 			<form id="ai-form" class="la-options__card" autocomplete="off">
-				<h2 class="la-options__heading">AI generation</h2>
+				<h2 id="form-heading" class="la-options__heading">Add provider</h2>
+
+				<div class="la-field">
+					<label class="la-label" for="name">Name</label>
+					<input id="name" class="la-input" type="text" placeholder="e.g. OpenAI, or Ollama (local)" spellcheck="false" >
+					<small class="la-hint">Shown when you switch providers. Defaults to the server's address.</small>
+				</div>
 
 				<div class="la-field">
 					<label class="la-label" for="base-url">Base URL</label>
@@ -39,17 +54,39 @@
 				<div class="la-field">
 					<label class="la-label" for="model">Model</label>
 					<div class="la-options__inline">
-						<input id="model" class="la-input" list="model-list" placeholder="Load models, or type a model name" spellcheck="false" required >
+						<select id="model" class="la-select" hidden></select>
+						<input id="model-custom" class="la-input" type="text" placeholder="Model name, or load the list" spellcheck="false" >
 						<button id="load-models" class="la-btn la-btn--secondary" type="button">Load models</button>
 					</div>
-					<datalist id="model-list"></datalist>
+					<small id="model-hint" class="la-hint"></small>
 				</div>
 
 				<p id="status" class="la-options__status" role="status" aria-live="polite"></p>
 
 				<div class="la-modal__actions">
 					<button id="remove" class="la-btn la-btn--secondary" type="button">Remove</button>
-					<button class="la-btn la-btn--primary" type="submit">Save</button>
+					<button id="save" class="la-btn la-btn--primary" type="submit">Save</button>
+				</div>
+			</form>
+
+			<form id="voice-form" class="la-options__card" autocomplete="off">
+				<h2 id="voice-heading" class="la-options__heading">Your writing voice</h2>
+				<div class="la-field">
+					<label class="la-label" for="voice-samples">Samples of your own writing</label>
+					<textarea
+						id="voice-samples"
+						class="la-textarea"
+						rows="10"
+						spellcheck="false"
+						placeholder="Paste a few comments or messages you wrote and liked. Put a line with --- between samples."></textarea>
+					<small id="voice-hint" class="la-hint"></small>
+				</div>
+
+				<p id="voice-status" class="la-options__status" role="status" aria-live="polite"></p>
+
+				<div class="la-modal__actions">
+					<button id="clear-voice" class="la-btn la-btn--secondary" type="button">Clear</button>
+					<button id="save-voice" class="la-btn la-btn--primary" type="submit">Save</button>
 				</div>
 			</form>
 		</main>

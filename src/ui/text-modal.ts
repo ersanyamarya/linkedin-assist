@@ -4,8 +4,12 @@
  * options, a Generate button streams the AI's answer into the same panel, with Copy, Insert
  * (when the caller has an editor to fill) and Regenerate. The prompt is editable, and a step bar
  * (Inputs › Prompt › Answer) jumps back to earlier steps, including the form that built it.
+ * Under an answer, one-click rewrites (shorter, more casual...) and a local check for AI tells
+ * and length problems help polish it before it's inserted.
  */
-import { type AiStatus, generateReply, getAiStatus, openAiSettings } from "../lib/ai-bridge";
+import { findSlop, fixPunctuation, type SlopIssue } from "../lib";
+import { type AiStatus, generateReply, getAiStatus, openAiSettings, setActiveProvider } from "../lib/ai-bridge";
+import { buildRefinePrompt, REFINEMENTS } from "../prompt";
 import { btn, el, modalFooter, showModal } from "./components";
 import { showNotice } from "./notice";
 
@@ -23,9 +27,22 @@ const SPARKLE_ICON =
 
 const DEFAULT_SUBTITLE = "Paste it into your AI chat, then bring the answer back to LinkedIn.";
 const LOCAL_HINT = "Nothing is sent anywhere.";
+// A draft this much longer than its neighbours (and at least MIN_WORDS_TO_WARN) looks out of place in a thread.
+const LONGER_THAN_TYPICAL_FACTOR = 2;
+const MIN_WORDS_TO_WARN = 40;
 
 const countWords = (text: string): number => text.split(WHITESPACE).filter(Boolean).length;
 const describeLength = (text: string): string => `${countWords(text)} words · ${text.length} characters`;
+
+/** Length problems with `text`, as `SlopIssue`-shaped entries so they list alongside the AI-tell checks. */
+const findLengthProblems = (text: string, { maxChars, typicalWords }: Pick<TextModalOptions, "maxChars" | "typicalWords">): SlopIssue[] => {
+	const problems: SlopIssue[] = [];
+	if (maxChars && text.length > maxChars) problems.push({ label: `${text.length - maxChars} characters over the ${maxChars} limit`, fixable: false });
+	if (typicalWords && countWords(text) > Math.max(MIN_WORDS_TO_WARN, typicalWords * LONGER_THAN_TYPICAL_FACTOR)) {
+		problems.push({ label: `Much longer than the other comments here (about ${typicalWords} words)`, fixable: false });
+	}
+	return problems;
+};
 
 /** Copy button that briefly switches to "Copied" after a successful copy. */
 const copyButton = (getText: () => string, label: string, variant: "primary" | "secondary"): HTMLButtonElement => {
@@ -67,6 +84,10 @@ type TextModalOptions = {
 	onBack?: () => void;
 	/** Puts a generated answer into the LinkedIn editor. Without it there's no Insert button. */
 	onInsert?: (text: string) => void;
+	/** Hard character limit for the text, e.g. a connection note. The answer is flagged when it goes over. */
+	maxChars?: number;
+	/** Word count of comparable text around the user (other comments). The answer is flagged when it's far longer. */
+	typicalWords?: number;
 };
 
 type Step = "inputs" | "prompt" | "answer";
@@ -77,7 +98,7 @@ export const createTextModal = (
 	text: string,
 	title = "Your prompt is ready",
 	subtitle = DEFAULT_SUBTITLE,
-	{ generate = true, onBack, onInsert }: TextModalOptions = {}
+	{ generate = true, onBack, onInsert, maxChars, typicalWords }: TextModalOptions = {}
 ): void => {
 	const originalPrompt = text.replace(EXTRA_BLANK_LINES, "\n\n");
 
@@ -89,11 +110,16 @@ export const createTextModal = (
 	promptInput.setAttribute("aria-label", title);
 	const answerPanel = el("div", { className: `la-prompt-panel ${OUTPUT_CLASS}`, tabIndex: 0, hidden: true });
 	answerPanel.setAttribute("aria-label", "Generated answer");
+	const checks = el("div", { className: "la-checks", hidden: true });
+	const refineBar = el("div", { className: "la-chips", role: "group", hidden: true });
+	refineBar.setAttribute("aria-label", "Rewrite the answer");
 	const content = el("div", { className: "la-field la-compose" }, [
 		steps,
 		el("div", { className: "la-field__header" }, [label, el("span", { className: "la-field__meta" }, [resetLink, stats])]),
 		promptInput,
 		answerPanel,
+		checks,
+		refineBar,
 	]);
 
 	const hint = el("small", { className: "la-hint" });
@@ -149,12 +175,37 @@ export const createTextModal = (
 		);
 	};
 
+	/** Which provider Generate uses: a dropdown when several are saved, otherwise just its name. */
+	const providerPicker = (): Node | string => {
+		const providers = aiStatus?.providers ?? [];
+		if (providers.length < 2) return `${aiStatus?.providerName} · ${aiStatus?.model}`;
+
+		const picker = el(
+			"select",
+			{ className: "la-select la-select--inline" },
+			providers.map((p) => new Option(`${p.name} · ${p.model}`, p.id, false, p.id === aiStatus?.activeId))
+		);
+		picker.setAttribute("aria-label", "Provider to generate with");
+		picker.addEventListener("change", async () => {
+			const status = await setActiveProvider(picker.value);
+			if (status) {
+				aiStatus = status;
+				return;
+			}
+			picker.value = aiStatus?.activeId ?? "";
+			showNotice("Couldn't switch provider", "The extension didn't respond. Reload the page and try again.");
+		});
+		return picker;
+	};
+
 	const showPrompt = () => {
 		stop();
 		view = "prompt";
 		label.textContent = generate ? "Prompt · editable" : "Details";
 		promptInput.hidden = false;
 		answerPanel.hidden = true;
+		checks.hidden = true;
+		refineBar.hidden = true;
 		syncPromptMeta();
 		renderSteps();
 
@@ -165,7 +216,7 @@ export const createTextModal = (
 		if (canGenerate) {
 			const generateBtn = iconButton(SPARKLE_ICON, "Generate", "primary");
 			generateBtn.addEventListener("click", () => showAnswer(true));
-			hint.textContent = `Edit it if you like, then copy it or generate the answer with ${aiStatus?.model}.`;
+			hint.replaceChildren("Edit it if you like, then copy it or generate with ", providerPicker());
 			actions.replaceChildren(backBtn, copyBtn, generateBtn);
 			generateBtn.focus();
 			return;
@@ -181,15 +232,20 @@ export const createTextModal = (
 		copyBtn.focus();
 	};
 
-	/** Shows the answer view; `regenerate` starts a new request, otherwise the last answer is shown as is. */
-	const showAnswer = (regenerate: boolean) => {
+	/**
+	 * Shows the answer view. `regenerate` starts a new request, otherwise the last answer is shown as is.
+	 * `refinement` rewrites the current answer with that change instead of re-running the prompt.
+	 */
+	const showAnswer = (regenerate: boolean, refinement?: string) => {
 		stop();
 		view = "answer";
 		let busy = false;
+		const previousAnswer = refinement ? answer : "";
 
-		label.textContent = `Answer · ${aiStatus?.model}`;
+		label.textContent = `Answer · ${aiStatus?.providerName} · ${aiStatus?.model}`;
 		promptInput.hidden = true;
 		answerPanel.hidden = false;
+		refineBar.hidden = false;
 		resetLink.hidden = true;
 		hint.textContent = `Sent to ${aiStatus?.host}. Read it before you post.`;
 
@@ -203,16 +259,65 @@ export const createTextModal = (
 			close();
 		});
 
+		/** Problems with the current answer: length, then AI tells, with a one-click fix for the mechanical ones. */
+		const renderChecks = () => {
+			if (busy || !answer) {
+				checks.hidden = true;
+				return;
+			}
+
+			const problems = [...findLengthProblems(answer, { maxChars, typicalWords }), ...findSlop(answer)];
+			checks.hidden = false;
+			checks.dataset.state = problems.length ? "warn" : "ok";
+			if (!problems.length) {
+				checks.replaceChildren(el("small", { className: "la-hint" }, ["No AI tells or length problems found."]));
+				return;
+			}
+
+			const fixBtn = el("button", { type: "button", className: "la-link" }, ["Fix punctuation"]);
+			fixBtn.addEventListener("click", () => {
+				answer = fixPunctuation(answer);
+				answerPanel.textContent = answer;
+				stats.textContent = describeLength(answer);
+				renderChecks();
+			});
+			checks.replaceChildren(
+				el("small", { className: "la-checks__title" }, ["Worth a look before you post"]),
+				el(
+					"ul",
+					{ className: "la-checks__list" },
+					problems.map((problem) => el("li", {}, [problem.label]))
+				),
+				...(problems.some((problem) => problem.fixable) ? [fixBtn] : [])
+			);
+		};
+
+		refineBar.replaceChildren(
+			el("small", { className: "la-hint" }, ["Rewrite:"]),
+			...REFINEMENTS.map(({ label: chipLabel, instruction }) => {
+				const chip = el("button", { type: "button", className: "la-chip" }, [chipLabel]);
+				chip.addEventListener("click", () => showAnswer(true, instruction));
+				return chip;
+			})
+		);
+
 		const setBusy = (value: boolean) => {
 			busy = value;
 			regenerateBtn.textContent = busy ? "Stop" : "Regenerate";
 			copyBtn.disabled = busy || !answer;
 			if (insertBtn) insertBtn.disabled = busy || !answer;
+			for (const chip of Array.from(refineBar.querySelectorAll("button"))) chip.disabled = busy || !answer;
 			answerPanel.setAttribute("aria-busy", String(busy));
+			renderChecks();
 			renderSteps();
 		};
 		const finish = (message: string) => {
 			stopGenerating = undefined;
+			// A rewrite that failed or was stopped before any text arrived leaves the earlier answer in place.
+			if (!answer && previousAnswer) {
+				answer = previousAnswer;
+				answerPanel.textContent = answer;
+			}
 			setBusy(false);
 			stats.textContent = answer ? describeLength(answer) : message;
 			(insertBtn && !insertBtn.disabled ? insertBtn : regenerateBtn).focus();
@@ -234,13 +339,14 @@ export const createTextModal = (
 			return;
 		}
 
+		const requestPrompt = refinement ? buildRefinePrompt(getPrompt(), answer, refinement) : getPrompt();
 		answer = "";
 		answerPanel.textContent = "";
 		stats.textContent = "Generating...";
 		setBusy(true);
 		regenerateBtn.focus();
 
-		stopGenerating = generateReply(getPrompt(), {
+		stopGenerating = generateReply(requestPrompt, {
 			onDelta: (delta) => {
 				const atBottom = answerPanel.scrollHeight - answerPanel.scrollTop - answerPanel.clientHeight < 24;
 				answer += delta;

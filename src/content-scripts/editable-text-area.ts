@@ -1,5 +1,5 @@
 import type { CommentPromptOptions, RepostPromptOptions } from "../lib";
-import { DOM, ensureEnterToSend, MessagesSchema, PostCommentsSchema, RepostSchema, setEditableText, UI } from "../lib";
+import { DOM, ensureEnterToSend, loadVoiceSamples, MessagesSchema, PostCommentsSchema, RepostSchema, setEditableText, UI } from "../lib";
 import { buildLinkedInCommentPrompt, buildLinkedInRepostPrompt, buildMessagesPrompt } from "../prompt";
 import {
 	createIdeaButton,
@@ -15,11 +15,26 @@ import {
 	extractMessagingThreadDetails,
 	extractPostContent,
 	extractPostDetails,
+	extractReplyTarget,
 	extractSenderName,
 	findCommentaryTextElement,
 	findReactionsCountAnchors,
 	isMessagingThread,
 } from "./extract";
+
+// LinkedIn rejects comments longer than this.
+const COMMENT_MAX_CHARS = 1250;
+
+const WHITESPACE = /\s+/;
+const countWords = (text: string): number => text.split(WHITESPACE).filter(Boolean).length;
+
+/** Median length in words of the visible comments, or undefined when there are too few to compare against. */
+const typicalWordCount = (comments: readonly string[]): number | undefined => {
+	const MIN_COMMENTS = 3;
+	if (comments.length < MIN_COMMENTS) return;
+	const sorted = comments.map(countWords).sort((a, b) => a - b);
+	return sorted[Math.floor(sorted.length / 2)];
+};
 
 const observer = new MutationObserver(() => {
 	for (const editableTextArea of Array.from(document.querySelectorAll(DOM.SELECTORS.EDITABLE_COMMENT_BOX)).filter(
@@ -69,7 +84,7 @@ const markCommentaryText = (editableTextArea: Element) => {
  * Handles idea button clicks for a comment editor.
  * Detects if we're on a messaging thread or a regular post and extracts accordingly.
  */
-const openMessagingPromptModal = (editableTextArea: Element) => {
+const openMessagingPromptModal = async (editableTextArea: Element) => {
 	const { senderName, messages } = extractMessagingThreadDetails();
 	if (!senderName && messages.length === 0) {
 		showNotice("Couldn't read this conversation", "Wait for the messages to finish loading, then click the bulb again.");
@@ -91,9 +106,10 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 		senderName,
 		messages,
 	});
+	const voiceSamples = await loadVoiceSamples();
 	createMessageReplyModal({
 		data: parsed.data,
-		buildPrompt: buildMessagesPrompt,
+		buildPrompt: (data, options) => buildMessagesPrompt(data, { ...options, voiceSamples }),
 		onSubmit: (result, reopen) => {
 			if (result.mode === "preset") {
 				setEditableText(editableTextArea, result.text);
@@ -104,7 +120,7 @@ const openMessagingPromptModal = (editableTextArea: Element) => {
 	});
 };
 
-const openPostPromptModal = (editableTextArea: Element) => {
+const openPostPromptModal = async (editableTextArea: Element) => {
 	const { postText, comments } = extractPostDetails(editableTextArea);
 	if (!postText) {
 		showNotice("Couldn't read this post", "LinkedIn may still be loading it. Scroll the post fully into view, then click the bulb again.");
@@ -126,14 +142,24 @@ const openPostPromptModal = (editableTextArea: Element) => {
 		postText,
 		comments,
 	});
+	const replyTo = extractReplyTarget(editableTextArea);
+	const voiceSamples = await loadVoiceSamples();
 	createPostCommentPromptModal({
 		postText: parsed.data.postText,
+		replyTo,
 		comments: parsed.data.comments,
 		onSubmit: (options: CommentPromptOptions, reopen) => {
-			createTextModal(buildLinkedInCommentPrompt(options), "Your comment prompt is ready", undefined, {
-				onBack: reopen,
-				onInsert: (text) => setEditableText(editableTextArea, text),
-			});
+			createTextModal(
+				buildLinkedInCommentPrompt({ ...options, voiceSamples }),
+				replyTo ? "Your reply prompt is ready" : "Your comment prompt is ready",
+				undefined,
+				{
+					onBack: reopen,
+					onInsert: (text) => setEditableText(editableTextArea, text),
+					maxChars: COMMENT_MAX_CHARS,
+					typicalWords: typicalWordCount(parsed.data.comments),
+				}
+			);
 		},
 	});
 };
@@ -145,7 +171,7 @@ const handleIdeaClick = (editableTextArea: Element) => {
 /**
  * Opens the repost-with-thoughts prompt modal for the feed item that owns `repostButton`.
  */
-const openRepostPromptModal = (repostButton: Element) => {
+const openRepostPromptModal = async (repostButton: Element) => {
 	const postText = extractPostContent(repostButton);
 	if (!postText) {
 		showNotice("Couldn't read this post", "LinkedIn may still be loading it. Scroll the post fully into view, then click the bulb again.");
@@ -163,10 +189,11 @@ const openRepostPromptModal = (repostButton: Element) => {
 	}
 
 	console.log("LinkedIn Assist extracted for repost:", { postText });
+	const voiceSamples = await loadVoiceSamples();
 	createRepostPromptModal({
 		postText: parsed.data.postText,
 		onSubmit: (options: RepostPromptOptions, reopen) => {
-			createTextModal(buildLinkedInRepostPrompt(options), "Your repost prompt is ready", undefined, { onBack: reopen });
+			createTextModal(buildLinkedInRepostPrompt({ ...options, voiceSamples }), "Your repost prompt is ready", undefined, { onBack: reopen });
 		},
 	});
 };

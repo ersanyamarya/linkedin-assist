@@ -5,19 +5,37 @@
 import type { AiRuntimeMessage, AiStatus, GenerateEvent, GenerateRequest } from "../lib/ai-bridge";
 import { AI_GENERATE_PORT } from "../lib/ai-bridge";
 import { describeAiError, streamChat } from "../lib/ai-client";
-import { isAiConfigured, loadAiSettings, originPattern } from "../lib/ai-settings";
+import { activeProvider, isAiConfigured, loadAiSettings, loadProviders, originPattern, saveProviders } from "../lib/ai-settings";
 
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 
 const getStatus = async (): Promise<AiStatus> => {
-	const settings = await loadAiSettings();
-	if (!isAiConfigured(settings)) return { configured: false };
-	return { configured: true, model: settings.model, host: new URL(settings.baseUrl).host };
+	const state = await loadProviders();
+	const active = activeProvider(state);
+	if (!isAiConfigured(active)) return { configured: false };
+	return {
+		configured: true,
+		activeId: active.id,
+		providerName: active.name,
+		model: active.model,
+		host: new URL(active.baseUrl).host,
+		providers: state.providers.filter((p) => isAiConfigured(p)).map(({ id, name, model }) => ({ id, name, model })),
+	};
+};
+
+const setActive = async (id: string): Promise<AiStatus> => {
+	const state = await loadProviders();
+	if (state.providers.some((p) => p.id === id)) await saveProviders({ ...state, activeId: id });
+	return getStatus();
 };
 
 chrome.runtime.onMessage.addListener((message: AiRuntimeMessage, _sender, sendResponse) => {
 	if (message?.type === "ai-status") {
 		getStatus().then(sendResponse, () => sendResponse({ configured: false } satisfies AiStatus));
+		return true;
+	}
+	if (message?.type === "ai-set-active") {
+		setActive(message.id).then(sendResponse, () => sendResponse(undefined));
 		return true;
 	}
 	if (message?.type === "open-options") chrome.runtime.openOptionsPage();
