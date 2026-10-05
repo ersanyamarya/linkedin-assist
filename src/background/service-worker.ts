@@ -6,6 +6,8 @@ import type { AiRuntimeMessage, AiStatus, GenerateEvent, GenerateRequest } from 
 import { AI_GENERATE_PORT } from "../lib/ai-bridge";
 import { describeAiError, streamChat } from "../lib/ai-client";
 import { activeProvider, isAiConfigured, loadAiSettings, loadProviders, originPattern, saveProviders } from "../lib/ai-settings";
+import type { VoiceRuntimeMessage } from "../lib/voice-settings";
+import { readVoiceSamples, writeVoiceSamples } from "./voice-store";
 
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 
@@ -29,7 +31,26 @@ const setActive = async (id: string): Promise<AiStatus> => {
 	return getStatus();
 };
 
-chrome.runtime.onMessage.addListener((message: AiRuntimeMessage, _sender, sendResponse) => {
+/** True for the extension's own pages (options), false for content scripts running on linkedin.com. */
+const isExtensionPage = (sender: chrome.runtime.MessageSender): boolean =>
+	sender.id === chrome.runtime.id && Boolean(sender.url?.startsWith(chrome.runtime.getURL("")));
+
+chrome.runtime.onMessage.addListener((message: AiRuntimeMessage | VoiceRuntimeMessage, sender, sendResponse) => {
+	if (message?.type === "voice-load") {
+		readVoiceSamples().then(sendResponse, () => sendResponse([]));
+		return true;
+	}
+	if (message?.type === "voice-save") {
+		if (!isExtensionPage(sender)) {
+			sendResponse(false);
+			return false;
+		}
+		writeVoiceSamples(message.samples).then(
+			() => sendResponse(true),
+			() => sendResponse(false)
+		);
+		return true;
+	}
 	if (message?.type === "ai-status") {
 		getStatus().then(sendResponse, () => sendResponse({ configured: false } satisfies AiStatus));
 		return true;

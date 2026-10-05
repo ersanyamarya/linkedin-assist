@@ -1,0 +1,17 @@
+{
+  "_comment": [
+    "JSON has no comments, so this key carries the notes. Nothing in this repo reads this file yet.",
+    "To run: start the audit tool from the repo root, e.g. `skill_run security-audit --profile standard` (the command used in security-audit/run-1/remediation-plan.md), and give it these values (profile, budget, output dir, checks). Whether it accepts a config-file flag is unverified.",
+    "Output goes to audit_output_dir as run-<N>/ (REPORT.md, findings.json, remediation-plan.md). The folder is gitignored.",
+    "Local equivalents that already work without the tool: `bun run security` covers lockfile-check (validate-lock, verify-lock) and csp-check (check-csp). crypto-check and normalize-base-url-check have no script yet; they need the unit tests from Phase 1."
+  ],
+  "audit_output_dir": "security-audit",
+  "budget": "medium",
+  "profile": "standard",
+  "enabled_checks": [
+    "crypto-check",
+    "csp-check",
+    "lockfile-check",
+    "normalize-base-url-check"
+  ]
+}
