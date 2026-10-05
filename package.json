@@ -9,22 +9,27 @@
     "build": "bun run clean && mkdir dist && bun run copy && bun build --target node --format iife ./src/**/** --outdir dist",
     "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
     "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\"",
-    "format": "ultracite fix"
+    "format": "ultracite fix",
+    "validate-lock": "node scripts/validate-lock.cjs",
+    "verify-lock": "node scripts/verify-lock.cjs",
+    "check-csp": "node scripts/check-manifest-csp.cjs",
+    "scan-secrets": "node scripts/scan-secrets.cjs",
+    "security": "bun run validate-lock && bun run verify-lock && bun run check-csp && bun run scan-secrets"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
-    "@types/bun": "latest",
-    "@types/dom-chromium-ai": "^0.0.13",
-    "chokidar-cli": "^3.0.0",
-    "chrome-types": "^0.1.414",
-    "concurrently": "^9.2.1",
+    "@types/bun": "1.3.6",
+    "@types/dom-chromium-ai": "0.0.13",
+    "chokidar-cli": "3.0.0",
+    "chrome-types": "0.1.414",
+    "concurrently": "9.2.1",
     "ultracite": "7.0.12"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "openai": "^7.23.0",
-    "zod": "^4.3.6"
+    "openai": "7.23.0",
+    "zod": "4.3.6"
   }
 }

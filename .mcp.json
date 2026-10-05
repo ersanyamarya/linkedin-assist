@@ -5,7 +5,7 @@
     },
     "context7": {
       "command": "context7-mcp",
-      "args": ["--api-key", "ctx7sk-48946159-7552-450b-b0a2-69d48de0dca6"]
+      "args": ["--api-key", "${CONTEXT7_API_KEY}"]
     },
     "fallow": {
       "command": "fallow-mcp"
@@ -15,7 +15,7 @@
       "args": ["--browser", "chrome", "--output-dir", ".playwright-mcp"]
     },
     "internet-search": {
-      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}",
       "type": "http"
     },
     "graft": {

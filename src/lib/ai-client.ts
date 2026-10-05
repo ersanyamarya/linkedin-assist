@@ -9,8 +9,7 @@ import type { AiConnection, AiSettings } from "./ai-settings";
 // Local servers often need no token, but the SDK refuses to start without one.
 const NO_TOKEN_PLACEHOLDER = "not-needed";
 
-const createClient = ({ baseUrl, apiKey }: AiConnection): OpenAI =>
-	new OpenAI({ baseURL: baseUrl, apiKey: apiKey || NO_TOKEN_PLACEHOLDER, dangerouslyAllowBrowser: true, maxRetries: 1 });
+const createClient = ({ baseUrl, apiKey }: AiConnection): OpenAI => new OpenAI({ baseURL: baseUrl, apiKey: apiKey || NO_TOKEN_PLACEHOLDER, maxRetries: 1 });
 
 export const listModels = async (connection: AiConnection): Promise<string[]> => {
 	const ids: string[] = [];

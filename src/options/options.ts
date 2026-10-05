@@ -54,8 +54,10 @@ const setStatus = (message: string, tone: "info" | "error" | "success" = "info")
 const readConnection = (): AiConnection | undefined => {
 	try {
 		return { baseUrl: normalizeBaseUrl(baseUrlInput.value), apiKey: apiKeyInput.value.trim() };
-	} catch {
-		setStatus("Enter a valid base URL, like https://api.openai.com/v1.", "error");
+	} catch (error) {
+		// `new URL` throws a TypeError; the other errors carry a specific reason worth showing.
+		const invalid = error instanceof TypeError || !(error instanceof Error);
+		setStatus(invalid ? "Enter a valid base URL, like https://api.openai.com/v1." : error.message, "error");
 		baseUrlInput.focus();
 		return;
 	}
