@@ -9,7 +9,10 @@ import type { AiConnection, AiSettings } from "./ai-settings";
 // Local servers often need no token, but the SDK refuses to start without one.
 const NO_TOKEN_PLACEHOLDER = "not-needed";
 
-const createClient = ({ baseUrl, apiKey }: AiConnection): OpenAI => new OpenAI({ baseURL: baseUrl, apiKey: apiKey || NO_TOKEN_PLACEHOLDER, maxRetries: 1 });
+// The SDK blocks browser-like contexts by default because a token in a web page is exposed.
+// This only runs in extension pages (the options page); content scripts never import it.
+const createClient = ({ baseUrl, apiKey }: AiConnection): OpenAI =>
+	new OpenAI({ baseURL: baseUrl, apiKey: apiKey || NO_TOKEN_PLACEHOLDER, dangerouslyAllowBrowser: true, maxRetries: 1 });
 
 export const listModels = async (connection: AiConnection): Promise<string[]> => {
 	const ids: string[] = [];
