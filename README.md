@@ -111,6 +111,8 @@ Load `dist/` through **Load unpacked** as above. `bun run dev` rebuilds on every
 | `bun run format` | Fixes style with Ultracite (Biome) |
 | `bun run security` | Lockfile, manifest CSP, and secret checks |
 | `bun run package` | Builds and zips into `release/` |
+| `bun run release:prepare` | Bumps the version and drafts the changelog (see Releasing) |
+| `bun run release` | Checks, tags, and pushes a release (see Releasing) |
 | `bun run icons` | Regenerates the PNG icons from `public/logo.svg` |
 | `bun run store-assets` | Regenerates the screenshots and promo images in `store-assets/` |
 
@@ -138,9 +140,13 @@ Conventions and the pull request checklist are in [CONTRIBUTING.md](CONTRIBUTING
 
 ## Releasing
 
-1. Bump `version` in `public/manifest.json` and add a `## [x.y.z] - date` section to `CHANGELOG.md`.
-2. Commit, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-3. The Release workflow builds, zips, and publishes the GitHub release with the changelog section as its notes.
+1. Run `bun run release:prepare patch` (or `minor`, `major`, or an exact version like `1.0.0`). It bumps `version` in `public/manifest.json` and drafts a `CHANGELOG.md` section from the commit messages since the last tag.
+2. Edit that section for users, and delete its `TODO` line.
+3. Get the version bump and the changelog onto `main`.
+4. Run `bun run release`. It checks that you're on `main` with nothing uncommitted, that the changelog section is finished and the tag is new, and that security, build, tests, and lint pass. After you confirm, it tags the commit and pushes `main` and the tag.
+5. The Release workflow builds the zip and publishes the GitHub release, using the changelog section as the notes. Watch it in the Actions tab.
+
+`bun run release -- --dry-run` runs every check without tagging or pushing. The release script never creates a commit.
 
 ## Contributing
 

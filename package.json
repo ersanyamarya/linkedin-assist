@@ -16,6 +16,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "package": "bun run build && node scripts/package-extension.cjs",
+    "release:prepare": "node scripts/release.cjs prepare",
+    "release": "node scripts/release.cjs",
     "copy": "cp -r public/** dist/",
     "build": "bun run clean && mkdir dist && bun run copy && bun build --target node --format iife --root . src/**/*.ts --outdir dist",
     "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
