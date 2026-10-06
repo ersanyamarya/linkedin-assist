@@ -35,7 +35,7 @@
     "@types/dom-chromium-ai": "0.0.13",
     "chokidar-cli": "3.0.0",
     "chrome-types": "0.1.414",
-    "concurrently": "9.2.1",
+    "concurrently": "10.0.5",
     "playwright-core": "1.63.0",
     "sharp": "0.35.5",
     "ultracite": "7.0.12"
