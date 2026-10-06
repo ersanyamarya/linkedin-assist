@@ -137,34 +137,37 @@ const contextCard = () => {
 	return { el: card, update };
 };
 
-/**
- * Creates a modal for replying to LinkedIn message threads: either a preset reply inserted into
- * the message box, or a prompt for an LLM built from tone, length, intent and formality.
- */
-export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
-	const { data, buildPrompt, onSubmit } = args;
+/** Who "You are" and "Replying to" start as: you are the participant who isn't the thread's sender. */
+const defaultNames = (participants: readonly string[], senderName: string) => {
+	const yourName = participants.find((n) => normalizeWhitespace(n) !== senderName) ?? "";
+	const recipient = senderName || (participants.find((n) => n !== yourName) ?? "");
+	return { yourName, recipient };
+};
 
-	const participants = collectParticipants(data);
-	const senderName = normalizeWhitespace(data.senderName);
-	const isSingle = participants.length === 1;
+/** In a one-person thread there is nothing to choose: "You are" stays blank and both selects are locked. */
+const createSingleNameSelects = (participants: readonly string[]) => {
+	const yourNameSelect = select(participants, "");
+	yourNameSelect.disabled = true;
+	yourNameSelect.value = "";
+	const recipientSelect = select(participants, participants[0]);
+	recipientSelect.disabled = true;
+	return { yourNameSelect, recipientSelect };
+};
 
-	// Default names
-	const defaultYourName = participants.find((n) => normalizeWhitespace(n) !== senderName) ?? "";
-	const defaultRecipient = senderName || (participants.find((n) => n !== defaultYourName) ?? "");
+const createNameSelects = (participants: readonly string[], senderName: string) => {
+	if (participants.length === 1) return createSingleNameSelects(participants);
+	const { yourName, recipient } = defaultNames(participants, senderName);
+	return {
+		yourNameSelect: select(participants, yourName),
+		recipientSelect: select(
+			participants.filter((n) => n !== yourName),
+			recipient
+		),
+	};
+};
 
-	// Name selects
-	const yourNameSelect = select(participants, isSingle ? "" : defaultYourName);
-	const recipientSelect = select(isSingle ? participants : participants.filter((n) => n !== defaultYourName), isSingle ? participants[0] : defaultRecipient);
-	if (isSingle) {
-		yourNameSelect.disabled = true;
-		yourNameSelect.value = "";
-		recipientSelect.disabled = true;
-	}
-
-	const context = contextCard();
-
-	// Mode toggle
-	const modeGroup = radioGroup<MessageReplyMode>(
+const createModeGroup = () =>
+	radioGroup<MessageReplyMode>(
 		"Reply type",
 		[
 			{ value: "preset", label: "Preset reply" },
@@ -173,58 +176,90 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		"preset"
 	);
 
-	// Preset controls
-	const presetGroup = pillGroup(
+const createPresetControls = () => {
+	const group = pillGroup(
 		"Pick a preset",
 		MESSAGE_REPLY_PRESETS.map((p) => ({ value: p.id, label: p.label })),
 		MESSAGE_REPLY_PRESETS[0]?.id ?? ""
 	);
-	const presetPreview = textArea("");
-	presetPreview.rows = 7;
+	const preview = textArea("");
+	preview.rows = 7;
 	const charCount = el("small", { className: "la-hint" });
-	const presetPreviewSection = el("div", { className: "la-field" }, [
+	const updateCharCount = () => {
+		charCount.textContent = `${preview.value.length} characters · edit freely`;
+	};
+	preview.addEventListener("input", updateCharCount);
+	const previewSection = el("div", { className: "la-field" }, [
 		el("div", { className: "la-field__header" }, [el("label", { className: "la-label" }, ["Message"]), charCount]),
-		presetPreview,
+		preview,
 	]);
-	const presetSection = el("div", { className: "la-compose__section" }, [presetGroup.el, presetPreviewSection]);
+	const section = el("div", { className: "la-compose__section" }, [group.el, previewSection]);
+	return { group, preview, section, updateCharCount };
+};
 
-	// Prompt controls
-	const toneGroup = pillGroup<Tone>("Tone", toOptions(ALLOWED_TONES), ALLOWED_TONES[0], TONE_HINT);
-	const lengthGroup = pillGroup<Length>("Length", toOptions(ALLOWED_LENGTHS), ALLOWED_LENGTHS[0], LENGTH_HINT);
-	const intentGroup = pillGroup<Intent>("Intent", toOptions(ALLOWED_INTENTS), ALLOWED_INTENTS[0], INTENT_HINT);
-	const formalityGroup = pillGroup<Formality>("Formality", toOptions(ALLOWED_FORMALITIES), "medium", FORMALITY_HINT);
-	const ctaSwitch = toggleSwitch("Include a call-to-action", "Ends the reply with a clear next step");
+const createPromptControls = () => {
+	const tone = pillGroup<Tone>("Tone", toOptions(ALLOWED_TONES), ALLOWED_TONES[0], TONE_HINT);
+	const length = pillGroup<Length>("Length", toOptions(ALLOWED_LENGTHS), ALLOWED_LENGTHS[0], LENGTH_HINT);
+	const intent = pillGroup<Intent>("Intent", toOptions(ALLOWED_INTENTS), ALLOWED_INTENTS[0], INTENT_HINT);
+	const formality = pillGroup<Formality>("Formality", toOptions(ALLOWED_FORMALITIES), "medium", FORMALITY_HINT);
+	const cta = toggleSwitch("Include a call-to-action", "Ends the reply with a clear next step");
 	const extraInstructions = textArea("", false, "e.g. mention I'm free next Tuesday afternoon");
 	extraInstructions.rows = 3;
-	const promptSection = el("div", { className: "la-compose__section" }, [
-		toneGroup.el,
-		lengthGroup.el,
-		intentGroup.el,
-		formalityGroup.el,
-		ctaSwitch.el,
+	const section = el("div", { className: "la-compose__section" }, [
+		tone.el,
+		length.el,
+		intent.el,
+		formality.el,
+		cta.el,
 		field("Extra instructions (optional)", extraInstructions),
 	]);
+	return { tone, length, intent, formality, cta, extraInstructions, section };
+};
 
+type PromptControls = ReturnType<typeof createPromptControls>;
+
+const orUndefined = (value: string): string | undefined => normalizeWhitespace(value) || undefined;
+
+const buildPromptOptions = (controls: PromptControls, yourName: string, recipientName: string): MessagePromptOptions => ({
+	currentUserName: orUndefined(yourName),
+	recipientName: orUndefined(recipientName),
+	tone: controls.tone.getValue(),
+	length: controls.length.getValue(),
+	intent: controls.intent.getValue(),
+	formality: controls.formality.getValue(),
+	includeCTA: controls.cta.isOn() || undefined,
+	extraInstructions: orUndefined(controls.extraInstructions.value),
+});
+
+/** Template text for the preset with this id, or the first preset's. */
+const presetTemplate = (id: string): string => (MESSAGE_REPLY_PRESETS.find((p) => p.id === id) ?? MESSAGE_REPLY_PRESETS[0])?.template ?? "";
+
+/**
+ * Creates a modal for replying to LinkedIn message threads: either a preset reply inserted into
+ * the message box, or a prompt for an LLM built from tone, length, intent and formality.
+ */
+export const createMessageReplyModal = ({ data, buildPrompt, onSubmit }: MessageReplyModalArgs): void => {
+	const participants = collectParticipants(data);
+	const senderName = normalizeWhitespace(data.senderName);
+	const { yourNameSelect, recipientSelect } = createNameSelects(participants, senderName);
+	const context = contextCard();
+	const modeGroup = createModeGroup();
+	const preset = createPresetControls();
+	const prompt = createPromptControls();
 	const footerHint = el("small", { className: "la-hint" });
 
-	// Visibility toggle
 	const updateVisibility = () => {
 		const mode = modeGroup.getValue();
-		presetSection.hidden = mode !== "preset";
-		promptSection.hidden = mode !== "prompt";
+		preset.section.hidden = mode !== "preset";
+		prompt.section.hidden = mode !== "prompt";
 		submitBtn.textContent = SUBMIT_LABELS[mode];
 		footerHint.textContent = FOOTER_HINTS[mode];
 	};
 
-	const updateCharCount = () => {
-		charCount.textContent = `${presetPreview.value.length} characters · edit freely`;
-	};
-
 	// Picking a preset replaces whatever was typed in the message box.
 	const updatePreview = () => {
-		const preset = MESSAGE_REPLY_PRESETS.find((p) => p.id === presetGroup.getValue()) ?? MESSAGE_REPLY_PRESETS[0];
-		presetPreview.value = applyMessageTemplate(preset?.template ?? "", recipientSelect.value);
-		updateCharCount();
+		preset.preview.value = applyMessageTemplate(presetTemplate(preset.group.getValue()), recipientSelect.value);
+		preset.updateCharCount();
 	};
 
 	const updateRecipient = () => {
@@ -232,47 +267,32 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 		updatePreview();
 	};
 
-	// Wire events
 	yourNameSelect.addEventListener("change", () => {
 		const available = participants.filter((n) => n !== yourNameSelect.value);
 		updateOptions(recipientSelect, available, available[0] ?? "");
 		updateRecipient();
 	});
 	recipientSelect.addEventListener("change", updateRecipient);
-	presetGroup.el.addEventListener("change", updatePreview);
-	presetPreview.addEventListener("input", updateCharCount);
+	preset.group.el.addEventListener("change", updatePreview);
 	modeGroup.el.addEventListener("change", updateVisibility);
 
 	let modal: { close: () => void; hide: () => void; show: () => void } | undefined;
 
 	const form = modalForm(
-		[context.el, fieldRow(field("You are", yourNameSelect), field("Replying to", recipientSelect)), modeGroup.el, presetSection, promptSection],
+		[context.el, fieldRow(field("You are", yourNameSelect), field("Replying to", recipientSelect)), modeGroup.el, preset.section, prompt.section],
 		(event) => {
 			event.preventDefault();
-			const mode = modeGroup.getValue();
-			const recipientName = recipientSelect.value || senderName;
-
 			if (!modal) return;
 			const { close, hide, show } = modal;
 
-			if (mode === "preset") {
-				onSubmit({ mode, text: presetPreview.value.trim() }, show);
+			if (modeGroup.getValue() === "preset") {
+				onSubmit({ mode: "preset", text: preset.preview.value.trim() }, show);
 				close();
 				return;
 			}
 
-			const options: MessagePromptOptions = {
-				currentUserName: normalizeWhitespace(yourNameSelect.value) || undefined,
-				recipientName: normalizeWhitespace(recipientName) || undefined,
-				tone: toneGroup.getValue(),
-				length: lengthGroup.getValue(),
-				intent: intentGroup.getValue(),
-				formality: formalityGroup.getValue(),
-				includeCTA: ctaSwitch.isOn() || undefined,
-				extraInstructions: normalizeWhitespace(extraInstructions.value) || undefined,
-			};
-
-			onSubmit({ mode, text: buildPrompt(data, options) }, show);
+			const options = buildPromptOptions(prompt, yourNameSelect.value, recipientSelect.value || senderName);
+			onSubmit({ mode: "prompt", text: buildPrompt(data, options) }, show);
 			hide();
 		}
 	);
@@ -283,7 +303,6 @@ export const createMessageReplyModal = (args: MessageReplyModalArgs): void => {
 	]);
 	const submitBtn = footer.querySelector('button[type="submit"]') as HTMLButtonElement;
 
-	// Initialize
 	updateRecipient();
 	updateVisibility();
 

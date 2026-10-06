@@ -59,9 +59,12 @@ const ENTER_TO_SEND_ATTR = "data-enter-to-send-bound";
 
 const SEND_BUTTON_SELECTOR = "button[type='submit'], button.msg-form__send-button, button[data-control-name='send'], button[aria-label^='Send']";
 
+const MODIFIER_KEYS = ["shiftKey", "altKey", "ctrlKey", "metaKey"] as const;
+
+const hasModifier = (event: KeyboardEvent): boolean => MODIFIER_KEYS.some((key) => event[key]);
+
 /** Plain Enter: no modifier, not mid-IME-composition, not already handled. */
-const isPlainEnter = (event: KeyboardEvent): boolean =>
-	!event.defaultPrevented && event.key === "Enter" && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && !event.isComposing;
+const isPlainEnter = (event: KeyboardEvent): boolean => event.key === "Enter" && !event.defaultPrevented && !event.isComposing && !hasModifier(event);
 
 /** The enabled send button in the editor's form, or null when there's no text or nothing to click. */
 const findEnabledSendButton = (editor: HTMLElement): HTMLButtonElement | null => {

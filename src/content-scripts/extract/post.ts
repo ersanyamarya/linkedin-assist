@@ -26,36 +26,28 @@ const findPostExpandableTextBoxes = (container: Element): Element[] => {
 	return Array.from(container.querySelectorAll(DOM.SELECTORS.EXPANDABLE_TEXT_BOX)).filter((el) => !commentList?.contains(el));
 };
 
+/** The feed item containing the anchor, or the article container used on full post pages. */
+const findPostContainer = (anchor: Element): Element | null => findFeedContainer(anchor) ?? document.querySelector(DOM.SELECTORS.POST_ARTICLE_CONTAINER);
+
+const textBoxOrSelf = (commentary: Element): Element => commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary;
+
+/** Post-page selector first, then the structural fallback for the no-data-view-name feed variant. */
+const findFallbackCommentary = (container: Element): Element | null =>
+	container.querySelector(DOM.SELECTORS.POST_COMMENTARY) ?? findPostExpandableTextBoxes(container)[0] ?? null;
+
+const findCommentaryIn = (container: Element): Element | null => {
+	const commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
+	return commentary ? textBoxOrSelf(commentary) : findFallbackCommentary(container);
+};
+
 /**
  * Finds the commentary text element for the feed item containing the anchor
  * (a comment editor or a social-action-bar button).
  * Works on both feed list and single post pages.
  */
 export const findCommentaryTextElement = (anchor: Element): Element | null => {
-	// Try to locate the feed container first (list view or single post).
-	let container = findFeedContainer(anchor);
-
-	// If not found, fallback to the article container used on full post pages.
-	if (!container) {
-		container = document.querySelector(DOM.SELECTORS.POST_ARTICLE_CONTAINER) as Element | null;
-	}
-	if (!container) return null;
-
-	// Feed commentary (main post text) within the container.
-	const commentary = container.querySelector(DOM.SELECTORS.FEED_COMMENTARY);
-	if (commentary) {
-		return commentary.querySelector(DOM.SELECTORS.EXPANDABLE_TEXT_BOX) ?? commentary;
-	}
-
-	// Alternate selector for post page commentary.
-	const postCommentary = container.querySelector(DOM.SELECTORS.POST_COMMENTARY);
-	if (postCommentary) return postCommentary;
-
-	// Structural fallback for the no-data-view-name feed variant.
-	const [firstPostTextBox] = findPostExpandableTextBoxes(container);
-	if (firstPostTextBox) return firstPostTextBox;
-
-	return null;
+	const container = findPostContainer(anchor);
+	return container ? findCommentaryIn(container) : null;
 };
 
 /**

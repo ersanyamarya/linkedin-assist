@@ -8,19 +8,34 @@ type ElementAttrs<T extends HTMLElement> = Partial<Record<keyof T, unknown>> & {
 	[attr: `aria-${string}` | `data-${string}`]: string | number;
 };
 
+type AttrRule = {
+	matches: (key: string, value: unknown) => boolean;
+	apply: (element: HTMLElement, key: string, value: unknown) => void;
+};
+
+const addListener = (element: HTMLElement, key: string, value: unknown): void => element.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
+
+// Hyphenated keys aren't real JS properties; they need setAttribute.
+const setHyphenated = (element: HTMLElement, key: string, value: unknown): void => {
+	if (typeof value === "string" || typeof value === "number") element.setAttribute(key, String(value));
+};
+
+const setProperty = (element: HTMLElement, key: string, value: unknown): void => {
+	(element as unknown as Record<string, unknown>)[key] = value;
+};
+
+/** Checked in order; the first match wins, and anything unmatched is set as a JS property. */
+const ATTR_RULES: readonly AttrRule[] = [
+	{ matches: (_key, value) => value === undefined || value === null, apply: () => undefined },
+	{ matches: (key, value) => key === "className" && typeof value === "string", apply: setProperty },
+	{ matches: (key, value) => key.startsWith("on") && typeof value === "function", apply: addListener },
+	{ matches: (key) => key.includes("-"), apply: setHyphenated },
+];
+
 /** Sets one attribute: className, on* listener, hyphenated (aria-*, data-*) attribute, or JS property. */
 const applyAttr = (element: HTMLElement, key: string, value: unknown): void => {
-	if (value === undefined || value === null) return;
-	if (key === "className" && typeof value === "string") {
-		element.className = value;
-	} else if (key.startsWith("on") && typeof value === "function") {
-		element.addEventListener(key.slice(2).toLowerCase(), value as EventListener);
-	} else if (key.includes("-")) {
-		// Hyphenated keys aren't real JS properties; they need setAttribute.
-		if (typeof value === "string" || typeof value === "number") element.setAttribute(key, String(value));
-	} else {
-		(element as unknown as Record<string, unknown>)[key] = value;
-	}
+	const rule = ATTR_RULES.find((candidate) => candidate.matches(key, value));
+	(rule?.apply ?? setProperty)(element, key, value);
 };
 
 /** Generic element factory with attribute assignment */

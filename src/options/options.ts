@@ -152,17 +152,24 @@ const useProvider = async (provider: AiProvider) => {
 	setStatus(`Now using ${provider.name}. Prompt windows on LinkedIn generate with it.`, "success");
 };
 
+/** Shown in the form while adding a new provider. */
+const BLANK_PROVIDER: Omit<AiProvider, "id"> = { name: "", baseUrl: "", apiKey: "", model: "", models: [] };
+
+const fillForm = (provider: Omit<AiProvider, "id">) => {
+	nameInput.value = provider.name;
+	baseUrlInput.value = provider.baseUrl;
+	apiKeyInput.value = provider.apiKey;
+	apiKeyInput.type = "password";
+	toggleKeyBtn.textContent = "Show";
+	setModelChoices(provider.models, provider.model);
+};
+
 /** Loads a saved provider into the form, or blank fields when `id` is undefined. */
 const editProvider = (id?: string) => {
 	const provider = state.providers.find((p) => p.id === id);
 	editingId = provider?.id;
 	formHeading.textContent = provider ? "Edit provider" : "Add provider";
-	nameInput.value = provider?.name ?? "";
-	baseUrlInput.value = provider?.baseUrl ?? "";
-	apiKeyInput.value = provider?.apiKey ?? "";
-	apiKeyInput.type = "password";
-	toggleKeyBtn.textContent = "Show";
-	setModelChoices(provider?.models ?? [], provider?.model ?? "");
+	fillForm(provider ?? BLANK_PROVIDER);
 	removeBtn.hidden = !provider;
 	setStatus("");
 	renderList();
@@ -181,25 +188,38 @@ addBtn.addEventListener("click", () => {
 	nameInput.focus();
 });
 
+/** Keeps the list for a saved provider right away, so it's still there when the page is reopened. */
+const saveFoundModels = async (found: string[]) => {
+	const savedId = editingId;
+	if (!savedId) return;
+	await updateProviders((current) => ({ ...current, providers: current.providers.map((p) => (p.id === savedId ? { ...p, models: found } : p)) }));
+};
+
+const reportFoundModels = (found: string[]) => {
+	setStatus(found.length ? `Found ${found.length} models.` : "The server returned no models. Type a model name.", found.length ? "success" : "info");
+	(modelSelect.hidden ? modelCustom : modelSelect).focus();
+};
+
+const fetchModels = async (connection: AiConnection) => {
+	try {
+		const found = await listModels(connection);
+		setModelChoices(found, getModel());
+		await saveFoundModels(found);
+		reportFoundModels(found);
+	} catch (err) {
+		setStatus(describeAiError(err), "error");
+	}
+};
+
+const loadModels = async (connection: AiConnection) => {
+	if (!(await requestAccess(connection.baseUrl))) return;
+	setStatus("Loading models...");
+	await fetchModels(connection);
+};
+
 loadModelsBtn.addEventListener("click", () => {
 	const connection = readConnection();
-	if (!connection) return;
-	withBusy(loadModelsBtn, async () => {
-		if (!(await requestAccess(connection.baseUrl))) return;
-		setStatus("Loading models...");
-		try {
-			const found = await listModels(connection);
-			setModelChoices(found, getModel());
-			// Keep the list for a saved provider right away, so it's still there when the page is reopened.
-			const savedId = editingId;
-			if (savedId)
-				await updateProviders((current) => ({ ...current, providers: current.providers.map((p) => (p.id === savedId ? { ...p, models: found } : p)) }));
-			setStatus(found.length ? `Found ${found.length} models.` : "The server returned no models. Type a model name.", found.length ? "success" : "info");
-			(modelSelect.hidden ? modelCustom : modelSelect).focus();
-		} catch (err) {
-			setStatus(describeAiError(err), "error");
-		}
-	});
+	if (connection) withBusy(loadModelsBtn, () => loadModels(connection));
 });
 
 form.addEventListener("submit", (event) => {

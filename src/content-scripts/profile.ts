@@ -211,24 +211,40 @@ const findActionRowItem = (actionButton: Element): Element => {
 
 const findProfileButton = (attr: string): Element | null => document.querySelector(`.${UI.CLASSES.IDEA_BUTTON}[${attr}]`);
 
+const findNameHeading = (): Element | null | undefined => findSection(getProfileName())?.querySelector(DOM.SELECTORS.PROFILE_SECTION_HEADING);
+
+type Placement = (button: HTMLElement) => void;
+
+/** How to put a button in the action row, or next to the name when the row can't be found. */
+const findPlacement = (): Placement | undefined => {
+	const actions = queryFirst(DOM.SELECTORS.PROFILE_ACTIONS_SELECTORS);
+	if (actions) return (button) => actions.append(button);
+
+	const actionButton = queryFirst(DOM.SELECTORS.PROFILE_ACTION_BUTTON_FALLBACKS);
+	if (actionButton) return (button) => findActionRowItem(actionButton).insertAdjacentElement("afterend", button);
+
+	const nameHeading = findNameHeading();
+	return nameHeading ? (button) => nameHeading.insertAdjacentElement("afterend", button) : undefined;
+};
+
+const addProfileIdeaButton = () => {
+	const place = findPlacement();
+	if (place) place(createProfileIdeaButton());
+};
+
+/** The connection-note button goes right after the profile summary button. */
+const addConnectionNoteButton = () => {
+	findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)?.insertAdjacentElement("afterend", createConnectionNoteButton());
+};
+
 /**
  * Places the idea buttons in the profile's action row (Message / Connect / More): the profile
  * summary button, then the connection-note button right after it. Falls back to sitting next to
  * the name when the action row can't be found.
  */
 const attachIdeaButtons = () => {
-	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)) {
-		const actions = queryFirst(DOM.SELECTORS.PROFILE_ACTIONS_SELECTORS);
-		const actionButton = actions ? null : queryFirst(DOM.SELECTORS.PROFILE_ACTION_BUTTON_FALLBACKS);
-		const nameHeading = findSection(getProfileName())?.querySelector(DOM.SELECTORS.PROFILE_SECTION_HEADING);
-
-		if (actions) actions.append(createProfileIdeaButton());
-		else if (actionButton) findActionRowItem(actionButton).insertAdjacentElement("afterend", createProfileIdeaButton());
-		else if (nameHeading) nameHeading.insertAdjacentElement("afterend", createProfileIdeaButton());
-	}
-
-	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_NOTE))
-		findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)?.insertAdjacentElement("afterend", createConnectionNoteButton());
+	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_IDEA)) addProfileIdeaButton();
+	if (!findProfileButton(DOM.ATTR.DATA_PROFILE_NOTE)) addConnectionNoteButton();
 };
 
 // LinkedIn is a single-page app, so this script runs on every page and checks the path on each

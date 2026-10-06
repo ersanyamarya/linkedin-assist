@@ -71,25 +71,31 @@ const PHRASE_CHECKS: readonly { label: string; pattern: RegExp }[] = [
 const countMatches = (text: string, pattern: RegExp): number => text.match(pattern)?.length ?? 0;
 const plural = (count: number, noun: string, suffix = "s"): string => `${count} ${noun}${count === 1 ? "" : suffix}`;
 
-/** What in `text` reads as AI-written. Empty when nothing stands out. */
-export const findSlop = (text: string): SlopIssue[] => {
-	const issues: SlopIssue[] = [];
-
+const dashIssues = (text: string): SlopIssue[] => {
 	const dashes = countMatches(text, DASHES);
-	if (dashes) issues.push({ label: plural(dashes, "em/en dash", "es"), fixable: true });
-
-	if (CURLY_QUOTE.test(text)) issues.push({ label: "curly quotes", fixable: true });
-
-	const words = new Set((text.match(BANNED_WORD_PATTERN) ?? []).map((word) => word.toLowerCase()));
-	if (words.size) issues.push({ label: `AI-flavoured ${words.size === 1 ? "word" : "words"}: ${[...words].join(", ")}`, fixable: false });
-
-	for (const { label, pattern } of PHRASE_CHECKS) if (pattern.test(text)) issues.push({ label, fixable: false });
-
-	const hashtags = countMatches(text, HASHTAG);
-	if (hashtags) issues.push({ label: plural(hashtags, "hashtag"), fixable: false });
-
-	return issues;
+	return dashes ? [{ label: plural(dashes, "em/en dash", "es"), fixable: true }] : [];
 };
+
+const quoteIssues = (text: string): SlopIssue[] => (CURLY_QUOTE.test(text) ? [{ label: "curly quotes", fixable: true }] : []);
+
+const wordIssues = (text: string): SlopIssue[] => {
+	const words = new Set((text.match(BANNED_WORD_PATTERN) ?? []).map((word) => word.toLowerCase()));
+	if (!words.size) return [];
+	return [{ label: `AI-flavoured ${words.size === 1 ? "word" : "words"}: ${[...words].join(", ")}`, fixable: false }];
+};
+
+const phraseIssues = (text: string): SlopIssue[] => PHRASE_CHECKS.filter(({ pattern }) => pattern.test(text)).map(({ label }) => ({ label, fixable: false }));
+
+const hashtagIssues = (text: string): SlopIssue[] => {
+	const hashtags = countMatches(text, HASHTAG);
+	return hashtags ? [{ label: plural(hashtags, "hashtag"), fixable: false }] : [];
+};
+
+/** Run in this order, which is the order issues are listed to the user. */
+const SLOP_CHECKS: readonly ((text: string) => SlopIssue[])[] = [dashIssues, quoteIssues, wordIssues, phraseIssues, hashtagIssues];
+
+/** What in `text` reads as AI-written. Empty when nothing stands out. */
+export const findSlop = (text: string): SlopIssue[] => SLOP_CHECKS.flatMap((check) => check(text));
 
 /** Replaces em/en dashes with commas and curly quotes with straight ones. Numeric ranges keep a hyphen. */
 export const fixPunctuation = (text: string): string =>

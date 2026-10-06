@@ -35,33 +35,43 @@ const setActive = async (id: string): Promise<AiStatus> => {
 const isExtensionPage = (sender: chrome.runtime.MessageSender): boolean =>
 	sender.id === chrome.runtime.id && Boolean(sender.url?.startsWith(chrome.runtime.getURL("")));
 
-chrome.runtime.onMessage.addListener((message: AiRuntimeMessage | VoiceRuntimeMessage, sender, sendResponse) => {
-	if (message?.type === "voice-load") {
-		readVoiceSamples().then(sendResponse, () => sendResponse([]));
-		return true;
-	}
-	if (message?.type === "voice-save") {
+type RuntimeMessage = AiRuntimeMessage | VoiceRuntimeMessage;
+type MessageOf<T extends RuntimeMessage["type"]> = Extract<RuntimeMessage, { type: T }>;
+type Respond = (response?: unknown) => void;
+/** Returns true when it will answer later through `respond`, which keeps the message channel open. */
+type Handler<T extends RuntimeMessage["type"]> = (message: MessageOf<T>, sender: chrome.runtime.MessageSender, respond: Respond) => boolean;
+
+/** Answers with the result of `work`, or with `fallback` if it fails. */
+const respondLater = (work: Promise<unknown>, respond: Respond, fallback: unknown): true => {
+	work.then(respond, () => respond(fallback));
+	return true;
+};
+
+const handlers: { [T in RuntimeMessage["type"]]: Handler<T> } = {
+	"voice-load": (_message, _sender, respond) => respondLater(readVoiceSamples(), respond, []),
+	"voice-save": (message, sender, respond) => {
 		if (!isExtensionPage(sender)) {
-			sendResponse(false);
+			respond(false);
 			return false;
 		}
-		writeVoiceSamples(message.samples).then(
-			() => sendResponse(true),
-			() => sendResponse(false)
+		return respondLater(
+			writeVoiceSamples(message.samples).then(() => true),
+			respond,
+			false
 		);
-		return true;
-	}
-	if (message?.type === "ai-status") {
-		getStatus().then(sendResponse, () => sendResponse({ configured: false } satisfies AiStatus));
-		return true;
-	}
-	if (message?.type === "ai-set-active") {
-		setActive(message.id).then(sendResponse, () => sendResponse(undefined));
-		return true;
-	}
-	if (message?.type === "open-options") chrome.runtime.openOptionsPage();
-	return false;
-});
+	},
+	"ai-status": (_message, _sender, respond) => respondLater(getStatus(), respond, { configured: false } satisfies AiStatus),
+	"ai-set-active": (message, _sender, respond) => respondLater(setActive(message.id), respond, undefined),
+	"open-options": () => {
+		chrome.runtime.openOptionsPage();
+		return false;
+	},
+};
+
+const findHandler = (type: unknown): Handler<RuntimeMessage["type"]> | undefined =>
+	typeof type === "string" && Object.hasOwn(handlers, type) ? (handlers[type as RuntimeMessage["type"]] as Handler<RuntimeMessage["type"]>) : undefined;
+
+chrome.runtime.onMessage.addListener((message: RuntimeMessage, sender, respond) => findHandler(message?.type)?.(message, sender, respond) ?? false);
 
 const generate = async (port: chrome.runtime.Port, prompt: string, signal: AbortSignal): Promise<void> => {
 	const send = (event: GenerateEvent) => {

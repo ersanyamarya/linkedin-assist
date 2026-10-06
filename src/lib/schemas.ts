@@ -14,8 +14,6 @@ export const PostCommentsSchema = z
 	})
 	.strict();
 
-export type PostComments = z.infer<typeof PostCommentsSchema>;
-
 /**
  * A post being reposted, extracted from LinkedIn's feed or single-post page.
  */
@@ -24,8 +22,6 @@ export const RepostSchema = z
 		postText: z.string(),
 	})
 	.strict();
-
-export type Repost = z.infer<typeof RepostSchema>;
 
 /**
  * A visited member's profile, extracted from their LinkedIn profile page.
@@ -48,14 +44,12 @@ export type Profile = z.infer<typeof ProfileSchema>;
 /**
  * A single message event in a messaging thread.
  */
-export const MessageSchema = z
+const MessageSchema = z
 	.object({
 		sender: z.string(),
 		text: z.string(),
 	})
 	.strict();
-
-export type Message = z.infer<typeof MessageSchema>;
 
 /**
  * Messaging thread extraction output.
@@ -71,7 +65,7 @@ export type Messages = z.infer<typeof MessagesSchema>;
 
 export const ALLOWED_EMOTIONS = ["confident", "thoughtful", "inquisitive", "supportive", "optimistic", "critical", "neutral"] as const;
 
-export const EmotionsSchema = z.enum(ALLOWED_EMOTIONS);
+const EmotionsSchema = z.enum(ALLOWED_EMOTIONS);
 export type Emotion = z.infer<typeof EmotionsSchema>;
 
 export const CommentPromptOptionsSchema = z
@@ -122,22 +116,22 @@ export const ConnectionNotePromptOptionsSchema = z
 export type ConnectionNotePromptOptions = z.infer<typeof ConnectionNotePromptOptionsSchema>;
 
 export const ALLOWED_TONES = ["friendly", "professional", "casual", "direct", "warm"] as const;
-export const TonesSchema = z.enum(ALLOWED_TONES);
+const TonesSchema = z.enum(ALLOWED_TONES);
 export type Tone = z.infer<typeof TonesSchema>;
 
 export const ALLOWED_LENGTHS = ["short", "medium", "long"] as const;
-export const LengthsSchema = z.enum(ALLOWED_LENGTHS);
+const LengthsSchema = z.enum(ALLOWED_LENGTHS);
 export type Length = z.infer<typeof LengthsSchema>;
 
 export const ALLOWED_INTENTS = ["reply", "follow-up", "close", "qualify-lead"] as const;
-export const IntentsSchema = z.enum(ALLOWED_INTENTS);
+const IntentsSchema = z.enum(ALLOWED_INTENTS);
 export type Intent = z.infer<typeof IntentsSchema>;
 
 export const ALLOWED_FORMALITIES = ["low", "medium", "high"] as const;
-export const FormalitiesSchema = z.enum(ALLOWED_FORMALITIES);
+const FormalitiesSchema = z.enum(ALLOWED_FORMALITIES);
 export type Formality = z.infer<typeof FormalitiesSchema>;
 
-export const MessagePromptOptionsSchema = z
+const MessagePromptOptionsSchema = z
 	.object({
 		currentUserName: z.string().optional(),
 		recipientName: z.string().optional(),

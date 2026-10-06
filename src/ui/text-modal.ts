@@ -30,6 +30,8 @@ const LOCAL_HINT = "Nothing is sent anywhere.";
 // A draft this much longer than its neighbours (and at least MIN_WORDS_TO_WARN) looks out of place in a thread.
 const LONGER_THAN_TYPICAL_FACTOR = 2;
 const MIN_WORDS_TO_WARN = 40;
+// Streaming keeps the answer scrolled to the end unless the reader has scrolled up by more than this.
+const SCROLL_FOLLOW_PX = 24;
 
 const countWords = (text: string): number => text.split(WHITESPACE).filter(Boolean).length;
 const describeLength = (text: string): string => `${countWords(text)} words · ${text.length} characters`;
@@ -92,6 +94,13 @@ type TextModalOptions = {
 
 type Step = "inputs" | "prompt" | "answer";
 
+type AnswerControls = {
+	backBtn: HTMLButtonElement;
+	regenerateBtn: HTMLButtonElement;
+	copyBtn: HTMLButtonElement;
+	insertBtn?: HTMLButtonElement;
+};
+
 const STEP_LABELS: Record<Step, string> = { inputs: "Inputs", prompt: "Prompt", answer: "Answer" };
 
 export const createTextModal = (
@@ -136,6 +145,8 @@ export const createTextModal = (
 	let aiStatus: AiStatus | undefined;
 	let view: Step = "prompt";
 	let answer = "";
+	/** True while a reply is streaming in. */
+	let busy = false;
 
 	const getPrompt = () => promptInput.value;
 	const isEdited = () => getPrompt() !== originalPrompt;
@@ -198,7 +209,7 @@ export const createTextModal = (
 		return picker;
 	};
 
-	const showPrompt = () => {
+	const enterPromptView = () => {
 		stop();
 		view = "prompt";
 		label.textContent = generate ? "Prompt · editable" : "Details";
@@ -208,20 +219,26 @@ export const createTextModal = (
 		refineBar.hidden = true;
 		syncPromptMeta();
 		renderSteps();
+	};
 
+	const createBackButton = (): HTMLButtonElement => {
 		const backBtn = btn(onBack ? "Back" : "Close", "secondary");
 		backBtn.addEventListener("click", onBack ? backToInputs : close);
-		const canGenerate = Boolean(aiStatus?.configured);
-		const copyBtn = copyButton(getPrompt, generate ? "Copy prompt" : "Copy", canGenerate ? "secondary" : "primary");
-		if (canGenerate) {
-			const generateBtn = iconButton(SPARKLE_ICON, "Generate", "primary");
-			generateBtn.addEventListener("click", () => showAnswer(true));
-			hint.replaceChildren("Edit it if you like, then copy it or generate with ", providerPicker());
-			actions.replaceChildren(backBtn, copyBtn, generateBtn);
-			generateBtn.focus();
-			return;
-		}
+		return backBtn;
+	};
 
+	const createPromptCopyButton = (canGenerate: boolean): HTMLButtonElement =>
+		copyButton(getPrompt, generate ? "Copy prompt" : "Copy", canGenerate ? "secondary" : "primary");
+
+	const showGenerateActions = (backBtn: HTMLButtonElement, copyBtn: HTMLButtonElement) => {
+		const generateBtn = iconButton(SPARKLE_ICON, "Generate", "primary");
+		generateBtn.addEventListener("click", () => showAnswer(true));
+		hint.replaceChildren("Edit it if you like, then copy it or generate with ", providerPicker());
+		actions.replaceChildren(backBtn, copyBtn, generateBtn);
+		generateBtn.focus();
+	};
+
+	const showLocalActions = (backBtn: HTMLButtonElement, copyBtn: HTMLButtonElement) => {
 		hint.replaceChildren(LOCAL_HINT);
 		if (generate && aiStatus) {
 			const setupLink = el("button", { type: "button", className: "la-link" }, ["Generate here instead"]);
@@ -232,66 +249,84 @@ export const createTextModal = (
 		copyBtn.focus();
 	};
 
-	/**
-	 * Shows the answer view. `regenerate` starts a new request, otherwise the last answer is shown as is.
-	 * `refinement` rewrites the current answer with that change instead of re-running the prompt.
-	 */
-	const showAnswer = (regenerate: boolean, refinement?: string) => {
-		stop();
-		view = "answer";
-		let busy = false;
-		const previousAnswer = refinement ? answer : "";
+	const showPrompt = () => {
+		enterPromptView();
+		const canGenerate = Boolean(aiStatus?.configured);
+		(canGenerate ? showGenerateActions : showLocalActions)(createBackButton(), createPromptCopyButton(canGenerate));
+	};
 
+	// --- Answer view ---
+
+	const enterAnswerView = () => {
 		label.textContent = `Answer · ${aiStatus?.providerName} · ${aiStatus?.model}`;
 		promptInput.hidden = true;
 		answerPanel.hidden = false;
 		refineBar.hidden = false;
 		resetLink.hidden = true;
 		hint.textContent = `Sent to ${aiStatus?.host}. Read it before you post.`;
+	};
 
-		const backBtn = btn("Back to prompt", "secondary");
-		backBtn.addEventListener("click", showPrompt);
-		const regenerateBtn = btn("Regenerate", "secondary");
-		const copyBtn = copyButton(() => answer, "Copy", onInsert ? "secondary" : "primary");
-		const insertBtn = onInsert ? btn("Insert", "primary") : undefined;
-		insertBtn?.addEventListener("click", () => {
-			onInsert?.(answer);
+	const createInsertButton = (): HTMLButtonElement | undefined => {
+		if (!onInsert) return;
+		const insertBtn = btn("Insert", "primary");
+		insertBtn.addEventListener("click", () => {
+			onInsert(answer);
 			close();
 		});
+		return insertBtn;
+	};
 
-		/** Problems with the current answer: length, then AI tells, with a one-click fix for the mechanical ones. */
-		const renderChecks = () => {
-			if (busy || !answer) {
-				checks.hidden = true;
-				return;
-			}
-
-			const problems = [...findLengthProblems(answer, { maxChars, typicalWords }), ...findSlop(answer)];
-			checks.hidden = false;
-			checks.dataset.state = problems.length ? "warn" : "ok";
-			if (!problems.length) {
-				checks.replaceChildren(el("small", { className: "la-hint" }, ["No AI tells or length problems found."]));
-				return;
-			}
-
-			const fixBtn = el("button", { type: "button", className: "la-link" }, ["Fix punctuation"]);
-			fixBtn.addEventListener("click", () => {
-				answer = fixPunctuation(answer);
-				answerPanel.textContent = answer;
-				stats.textContent = describeLength(answer);
-				renderChecks();
-			});
-			checks.replaceChildren(
-				el("small", { className: "la-checks__title" }, ["Worth a look before you post"]),
-				el(
-					"ul",
-					{ className: "la-checks__list" },
-					problems.map((problem) => el("li", {}, [problem.label]))
-				),
-				...(problems.some((problem) => problem.fixable) ? [fixBtn] : [])
-			);
+	const createAnswerControls = (): AnswerControls => {
+		const backBtn = btn("Back to prompt", "secondary");
+		backBtn.addEventListener("click", showPrompt);
+		return {
+			backBtn,
+			regenerateBtn: btn("Regenerate", "secondary"),
+			copyBtn: copyButton(() => answer, "Copy", onInsert ? "secondary" : "primary"),
+			insertBtn: createInsertButton(),
 		};
+	};
 
+	const fixPunctuationLink = (): HTMLButtonElement => {
+		const fixBtn = el("button", { type: "button", className: "la-link" }, ["Fix punctuation"]);
+		fixBtn.addEventListener("click", () => {
+			answer = fixPunctuation(answer);
+			answerPanel.textContent = answer;
+			stats.textContent = describeLength(answer);
+			renderChecks();
+		});
+		return fixBtn;
+	};
+
+	const problemNodes = (problems: SlopIssue[]): Node[] => [
+		el("small", { className: "la-checks__title" }, ["Worth a look before you post"]),
+		el(
+			"ul",
+			{ className: "la-checks__list" },
+			problems.map((problem) => el("li", {}, [problem.label]))
+		),
+		...(problems.some((problem) => problem.fixable) ? [fixPunctuationLink()] : []),
+	];
+
+	const checkNodes = (problems: SlopIssue[]): Node[] =>
+		problems.length ? problemNodes(problems) : [el("small", { className: "la-hint" }, ["No AI tells or length problems found."])];
+
+	const showChecks = (problems: SlopIssue[]) => {
+		checks.hidden = false;
+		checks.dataset.state = problems.length ? "warn" : "ok";
+		checks.replaceChildren(...checkNodes(problems));
+	};
+
+	/** Problems with the current answer: length, then AI tells, with a one-click fix for the mechanical ones. */
+	const renderChecks = () => {
+		if (busy || !answer) {
+			checks.hidden = true;
+			return;
+		}
+		showChecks([...findLengthProblems(answer, { maxChars, typicalWords }), ...findSlop(answer)]);
+	};
+
+	const renderRefineBar = () => {
 		refineBar.replaceChildren(
 			el("small", { className: "la-hint" }, ["Rewrite:"]),
 			...REFINEMENTS.map(({ label: chipLabel, instruction }) => {
@@ -300,29 +335,86 @@ export const createTextModal = (
 				return chip;
 			})
 		);
+	};
 
-		const setBusy = (value: boolean) => {
-			busy = value;
-			regenerateBtn.textContent = busy ? "Stop" : "Regenerate";
-			copyBtn.disabled = busy || !answer;
-			if (insertBtn) insertBtn.disabled = busy || !answer;
-			for (const chip of Array.from(refineBar.querySelectorAll("button"))) chip.disabled = busy || !answer;
-			answerPanel.setAttribute("aria-busy", String(busy));
-			renderChecks();
-			renderSteps();
-		};
-		const finish = (message: string) => {
-			stopGenerating = undefined;
-			// A rewrite that failed or was stopped before any text arrived leaves the earlier answer in place.
-			if (!answer && previousAnswer) {
-				answer = previousAnswer;
-				answerPanel.textContent = answer;
-			}
-			setBusy(false);
-			stats.textContent = answer ? describeLength(answer) : message;
-			(insertBtn && !insertBtn.disabled ? insertBtn : regenerateBtn).focus();
-		};
-		regenerateBtn.addEventListener("click", () => {
+	/** Buttons that do nothing useful while a reply streams in or when there is no answer yet. */
+	const lockableButtons = ({ copyBtn, insertBtn }: AnswerControls): HTMLButtonElement[] => [
+		copyBtn,
+		...(insertBtn ? [insertBtn] : []),
+		...Array.from(refineBar.querySelectorAll("button")),
+	];
+
+	const setBusy = (controls: AnswerControls, value: boolean) => {
+		busy = value;
+		const locked = busy || !answer;
+		controls.regenerateBtn.textContent = busy ? "Stop" : "Regenerate";
+		for (const button of lockableButtons(controls)) button.disabled = locked;
+		answerPanel.setAttribute("aria-busy", String(busy));
+		renderChecks();
+		renderSteps();
+	};
+
+	/** A rewrite that failed or was stopped before any text arrived leaves the earlier answer in place. */
+	const restoreAnswer = (previousAnswer: string) => {
+		if (!answer && previousAnswer) {
+			answer = previousAnswer;
+			answerPanel.textContent = answer;
+		}
+	};
+
+	const focusAfterAnswer = ({ insertBtn, regenerateBtn }: AnswerControls) => {
+		(insertBtn && !insertBtn.disabled ? insertBtn : regenerateBtn).focus();
+	};
+
+	const finishAnswer = (controls: AnswerControls, previousAnswer: string, message: string) => {
+		stopGenerating = undefined;
+		restoreAnswer(previousAnswer);
+		setBusy(controls, false);
+		stats.textContent = answer ? describeLength(answer) : message;
+		focusAfterAnswer(controls);
+	};
+
+	const appendDelta = (delta: string) => {
+		const atBottom = answerPanel.scrollHeight - answerPanel.scrollTop - answerPanel.clientHeight < SCROLL_FOLLOW_PX;
+		answer += delta;
+		answerPanel.textContent = answer;
+		stats.textContent = describeLength(answer);
+		if (atBottom) answerPanel.scrollTop = answerPanel.scrollHeight;
+	};
+
+	const startGeneration = (controls: AnswerControls, finish: (message: string) => void, refinement?: string) => {
+		const requestPrompt = refinement ? buildRefinePrompt(getPrompt(), answer, refinement) : getPrompt();
+		answer = "";
+		answerPanel.textContent = "";
+		stats.textContent = "Generating...";
+		setBusy(controls, true);
+		controls.regenerateBtn.focus();
+
+		stopGenerating = generateReply(requestPrompt, {
+			onDelta: appendDelta,
+			onDone: () => finish("The server sent an empty answer."),
+			onError: (message) => {
+				finish("Failed");
+				showNotice("Couldn't generate an answer", message);
+			},
+		});
+	};
+
+	/**
+	 * Shows the answer view. `regenerate` starts a new request, otherwise the last answer is shown as is.
+	 * `refinement` rewrites the current answer with that change instead of re-running the prompt.
+	 */
+	const showAnswer = (regenerate: boolean, refinement?: string) => {
+		stop();
+		view = "answer";
+		busy = false;
+		const previousAnswer = refinement ? answer : "";
+
+		enterAnswerView();
+		renderRefineBar();
+		const controls = createAnswerControls();
+		const finish = (message: string) => finishAnswer(controls, previousAnswer, message);
+		controls.regenerateBtn.addEventListener("click", () => {
 			if (!busy) {
 				showAnswer(true);
 				return;
@@ -330,36 +422,14 @@ export const createTextModal = (
 			stop();
 			finish("Stopped");
 		});
-
-		actions.replaceChildren(backBtn, regenerateBtn, copyBtn, ...(insertBtn ? [insertBtn] : []));
+		actions.replaceChildren(controls.backBtn, controls.regenerateBtn, controls.copyBtn, ...(controls.insertBtn ? [controls.insertBtn] : []));
 
 		if (!regenerate) {
 			answerPanel.textContent = answer;
 			finish("");
 			return;
 		}
-
-		const requestPrompt = refinement ? buildRefinePrompt(getPrompt(), answer, refinement) : getPrompt();
-		answer = "";
-		answerPanel.textContent = "";
-		stats.textContent = "Generating...";
-		setBusy(true);
-		regenerateBtn.focus();
-
-		stopGenerating = generateReply(requestPrompt, {
-			onDelta: (delta) => {
-				const atBottom = answerPanel.scrollHeight - answerPanel.scrollTop - answerPanel.clientHeight < 24;
-				answer += delta;
-				answerPanel.textContent = answer;
-				stats.textContent = describeLength(answer);
-				if (atBottom) answerPanel.scrollTop = answerPanel.scrollHeight;
-			},
-			onDone: () => finish("The server sent an empty answer."),
-			onError: (message) => {
-				finish("Failed");
-				showNotice("Couldn't generate an answer", message);
-			},
-		});
+		startGeneration(controls, finish, refinement);
 	};
 
 	showPrompt();

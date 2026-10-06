@@ -32,14 +32,21 @@ export async function* streamChat(settings: AiSettings, prompt: string, signal: 
 	}
 }
 
+const STATUS_MESSAGES: Record<number, string> = {
+	401: "The server rejected the API token.",
+	403: "The server rejected the API token.",
+	404: "Not found. Check the base URL (it usually ends in /v1) and the model name.",
+	429: "Rate limited or out of credits. Try again in a moment.",
+};
+
+const describeApiError = (err: APIError): string => {
+	const known = err.status ? STATUS_MESSAGES[err.status] : undefined;
+	return known ?? `The server returned an error${err.status ? ` (${err.status})` : ""}: ${err.message}`;
+};
+
 /** A short, human explanation of an SDK/network error. */
 export const describeAiError = (err: unknown): string => {
 	if (err instanceof APIConnectionError) return "Couldn't reach the server. Check the base URL and that the server is running.";
-	if (err instanceof APIError) {
-		if (err.status === 401 || err.status === 403) return "The server rejected the API token.";
-		if (err.status === 404) return "Not found. Check the base URL (it usually ends in /v1) and the model name.";
-		if (err.status === 429) return "Rate limited or out of credits. Try again in a moment.";
-		return `The server returned an error${err.status ? ` (${err.status})` : ""}: ${err.message}`;
-	}
+	if (err instanceof APIError) return describeApiError(err);
 	return err instanceof Error ? err.message : String(err);
 };

@@ -6,5 +6,6 @@
     "src/content-scripts/profile.ts",
     "src/background/service-worker.ts",
     "src/options/options.ts"
-  ]
+  ],
+  "ignoreUnresolvedImports": ["./src/options/options.js"]
 }

@@ -21,15 +21,13 @@ const normalizeTextBlock = (value: string): string => {
 
 const normalizeNameMatch = (value: string): string => value.toLowerCase();
 
+/** True when `name` is set and matches `sender`, ignoring case. */
+const isSameName = (sender: string, name: string | undefined): name is string => Boolean(name) && normalizeNameMatch(sender) === normalizeNameMatch(name ?? "");
+
 const resolveSenderLabel = (sender: string, options: MessagePromptOptions): string => {
 	const senderName = normalizeWhitespace(sender) || "Unknown";
-	const normalizedSender = normalizeNameMatch(senderName);
-	const normalizedYou = normalizeNameMatch(options.currentUserName ?? "");
-	const normalizedRecipient = normalizeNameMatch(options.recipientName ?? "");
-
-	if (normalizedYou && normalizedSender === normalizedYou) return "Me";
-	if (normalizedRecipient && normalizedSender === normalizedRecipient) return options.recipientName ?? senderName;
-
+	if (isSameName(senderName, options.currentUserName)) return "Me";
+	if (isSameName(senderName, options.recipientName)) return options.recipientName;
 	return senderName;
 };
 
