@@ -10,6 +10,8 @@
     "copy:watch": "chokidar \"public/**\" -c \"bun run copy\"",
     "dev": "concurrently \"bun run build --watch\" \"bun run copy:watch\"",
     "format": "ultracite fix",
+    "icons": "bun scripts/image-gen-tools/generate-icons.ts",
+    "store-assets": "bun scripts/image-gen-tools/generate-store-assets.ts",
     "validate-lock": "node scripts/validate-lock.cjs",
     "verify-lock": "node scripts/verify-lock.cjs",
     "check-csp": "node scripts/check-manifest-csp.cjs",
@@ -23,6 +25,8 @@
     "chokidar-cli": "3.0.0",
     "chrome-types": "0.1.414",
     "concurrently": "9.2.1",
+    "playwright-core": "1.63.0",
+    "sharp": "0.35.5",
     "ultracite": "7.0.12"
   },
   "peerDependencies": {
