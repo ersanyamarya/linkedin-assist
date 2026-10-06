@@ -28,17 +28,17 @@
 /* --------------------------------------------------------------------------
    Comment Row (idea button injection)
    -------------------------------------------------------------------------- */
-.linkedin-assist__comment-row {
+.netwrite__comment-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 }
 
-.linkedin-assist__comment-editor {
+.netwrite__comment-editor {
 	flex: 1;
 }
 
-.linkedin-assist__idea-button {
+.netwrite__idea-button {
 	display: inline-flex;
 	flex-shrink: 0;
 	align-items: center;
@@ -59,34 +59,34 @@
 		transform 0.1s ease;
 }
 
-.linkedin-assist__idea-button svg {
+.netwrite__idea-button svg {
 	width: 18px;
 	height: 18px;
 	pointer-events: none;
 }
 
-.linkedin-assist__idea-button:hover {
+.netwrite__idea-button:hover {
 	color: var(--la-primary);
 	background: var(--la-primary-tint);
 }
 
-.linkedin-assist__idea-button:active {
+.netwrite__idea-button:active {
 	transform: scale(0.9);
 }
 
-.linkedin-assist__idea-button:focus-visible {
+.netwrite__idea-button:focus-visible {
 	outline: 2px solid var(--la-primary);
 	outline-offset: 1px;
 }
 
-.linkedin-assist__quick-actions {
+.netwrite__quick-actions {
 	display: inline-flex;
 	gap: 6px;
 	align-items: center;
 	margin-left: 8px;
 }
 
-.linkedin-assist__idea-button--active {
+.netwrite__idea-button--active {
 	color: var(--la-primary);
 	background: var(--la-primary-tint);
 }
@@ -248,7 +248,7 @@
 	}
 }
 
-.linkedin-assist__commentary-text {
+.netwrite__commentary-text {
 	padding: 2px;
 	border: 1px solid #99cc00;
 	border-radius: 4px;

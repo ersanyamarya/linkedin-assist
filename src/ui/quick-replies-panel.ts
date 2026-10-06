@@ -116,7 +116,7 @@ export const createQuickRepliesPanel = (args: QuickRepliesPanelArgs): QuickRepli
 		position();
 		isOpen = true;
 		button.setAttribute("aria-expanded", "true");
-		button.classList.add("linkedin-assist__idea-button--active");
+		button.classList.add("netwrite__idea-button--active");
 
 		document.addEventListener("pointerdown", onPointerDown, true);
 		document.addEventListener("keydown", onKeydown);
@@ -130,7 +130,7 @@ export const createQuickRepliesPanel = (args: QuickRepliesPanelArgs): QuickRepli
 		isOpen = false;
 		panel.remove();
 		button.setAttribute("aria-expanded", "false");
-		button.classList.remove("linkedin-assist__idea-button--active");
+		button.classList.remove("netwrite__idea-button--active");
 
 		document.removeEventListener("pointerdown", onPointerDown, true);
 		document.removeEventListener("keydown", onKeydown);

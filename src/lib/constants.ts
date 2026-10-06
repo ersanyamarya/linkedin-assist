@@ -96,11 +96,11 @@ export const DOM = {
 export const UI = {
 	CLASSES: {
 		BUTTON_DEFAULTS: ["artdeco-button", "artdeco-button--muted", "artdeco-button--tertiary", "artdeco-button--circle"],
-		IDEA_BUTTON: "linkedin-assist__idea-button",
-		QUICK_ACTIONS: "linkedin-assist__quick-actions",
-		COMMENT_ROW: "linkedin-assist__comment-row",
-		COMMENT_EDITOR: "linkedin-assist__comment-editor",
-		COMMENTARY_TEXT: "linkedin-assist__commentary-text",
+		IDEA_BUTTON: "netwrite__idea-button",
+		QUICK_ACTIONS: "netwrite__quick-actions",
+		COMMENT_ROW: "netwrite__comment-row",
+		COMMENT_EDITOR: "netwrite__comment-editor",
+		COMMENTARY_TEXT: "netwrite__commentary-text",
 	},
 
 	SVG: {

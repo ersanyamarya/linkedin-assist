@@ -11,7 +11,7 @@
 
 <p align="center">
 	<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-4338ca.svg"></a>
-	<a href="https://github.com/ersanyamarya/linkedin-assist/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ersanyamarya/linkedin-assist/actions/workflows/ci.yml/badge.svg"></a>
+	<a href="https://github.com/ersanyamarya/netwrite/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ersanyamarya/netwrite/actions/workflows/ci.yml/badge.svg"></a>
 </p>
 
 <table>
@@ -52,7 +52,7 @@ Netwrite writes drafts. You read them, edit them, and post them yourself.
 
 You need Chrome, or another Chromium-based browser.
 
-1. Download `netwrite-v<version>.zip` from the [latest release](https://github.com/ersanyamarya/linkedin-assist/releases/latest) and unzip it.
+1. Download `netwrite-v<version>.zip` from the [latest release](https://github.com/ersanyamarya/netwrite/releases/latest) and unzip it.
 2. Open `chrome://extensions` and turn on **Developer mode**.
 3. Click **Load unpacked** and pick the unzipped folder.
 4. Refresh LinkedIn.

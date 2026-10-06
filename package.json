@@ -7,12 +7,12 @@
   "author": "Sanyam Arya",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ersanyamarya/linkedin-assist.git"
+    "url": "git+https://github.com/ersanyamarya/netwrite.git"
   },
   "bugs": {
-    "url": "https://github.com/ersanyamarya/linkedin-assist/issues"
+    "url": "https://github.com/ersanyamarya/netwrite/issues"
   },
-  "homepage": "https://github.com/ersanyamarya/linkedin-assist#readme",
+  "homepage": "https://github.com/ersanyamarya/netwrite#readme",
   "scripts": {
     "clean": "rm -rf dist",
     "package": "bun run build && node scripts/package-extension.cjs",

@@ -6,7 +6,7 @@ Only the latest release gets security fixes. Upgrade before reporting, if you ca
 
 ## Report a vulnerability
 
-Don't open a public issue. Use [GitHub's private vulnerability reporting](https://github.com/ersanyamarya/linkedin-assist/security/advisories/new) instead.
+Don't open a public issue. Use [GitHub's private vulnerability reporting](https://github.com/ersanyamarya/netwrite/security/advisories/new) instead.
 
 Include:
 

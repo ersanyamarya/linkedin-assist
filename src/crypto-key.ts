@@ -4,7 +4,7 @@
  * does not reveal the token. Only the background worker and options page should call these.
  */
 
-const DB_NAME = "linkedin-assist-crypto";
+const DB_NAME = "netwrite-crypto";
 const STORE = "keys";
 const KEY_ID = "api-key-v1";
 const IV_BYTES = 12;

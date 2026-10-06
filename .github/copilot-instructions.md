@@ -15,7 +15,7 @@
 - **Messaging sender extraction pitfall**: don’t use broad `a[href*='/in/']` (it matches `@mentions` in message paragraphs). Prefer `DOM.SELECTORS.MESSAGING_SENDER_NAME` and keep fallbacks mention-safe (see `extractMessageSenderNameRaw()` in `src/content-scripts/editable-text-area.ts`).
 - **Editable text UX**: use `setEditableText()`/`ensureEnterToSend()` from `src/lib/editable-text.ts` when inserting preset replies.
 - **Prompt formatting**: reuse `joinSections()`/`asFencedBlock()` from `src/prompt/prompt-utils.ts` to keep output consistent; both `prompt/messages.ts` and `prompt/post-comment.ts` follow this pattern.
-- **UI styling**: extension classes use `linkedin-assist__*` and are styled in `public/styles.css`; keep inline styles minimal and prefer `src/ui/components/*` helpers when adding modals.
+- **UI styling**: extension classes use `netwrite__*` and are styled in `public/styles.css`; keep inline styles minimal and prefer `src/ui/components/*` helpers when adding modals.
 - **Messaging presets**: presets live in `src/ui/message-reply-modal.ts` and are applied via `applyMessageTemplate()`; the preset panel toggles in `editable-text-area.ts` for thread pages.
 
 ## Developer workflows
