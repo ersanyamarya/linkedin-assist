@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Tag must match manifest version
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./public/manifest.json').version")
+          if [ "v$MANIFEST_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match manifest version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - run: bun run check-csp
+
+      - name: Build and zip
+        run: bun run package
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '/^## \[/ { p = index($0, "[" v "]") > 0; next } p' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "No CHANGELOG.md section for $VERSION"
+            exit 1
+          fi
+          cat >> notes.md <<'EOF'
+
+          ## Install
+
+          1. Download `linkedin-assist-*.zip` below and unzip it.
+          2. Open `chrome://extensions` and turn on **Developer mode**.
+          3. Click **Load unpacked** and pick the unzipped folder.
+          4. Refresh LinkedIn.
+
+          Chrome doesn't update unpacked extensions. To upgrade, download the new zip, replace the folder's contents, and click the reload icon on the extension card.
+          EOF
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/*.zip --title "LinkedIn Assist $GITHUB_REF_NAME" --notes-file notes.md

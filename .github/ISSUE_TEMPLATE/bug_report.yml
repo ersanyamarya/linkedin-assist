@@ -1,0 +1,67 @@
+name: Bug report
+description: Something doesn't work, or stopped working after a LinkedIn change
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Don't paste API tokens, voice samples, or other people's private LinkedIn content. Blur names and messages in screenshots.
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Shown on the extension's card in `chrome://extensions`.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 130 on macOS
+    validations:
+      required: true
+  - type: dropdown
+    id: page
+    attributes:
+      label: Where does it happen?
+      options:
+        - Feed or a single post (comment or reply)
+        - Messaging
+        - Profile (summary or connection note)
+        - Job page
+        - Repost
+        - Options page
+        - Somewhere else
+    validations:
+      required: true
+  - type: dropdown
+    id: ai
+    attributes:
+      label: Are you generating inside the extension?
+      options:
+        - No, I copy the prompt
+        - Yes, with a hosted provider
+        - Yes, with a local server
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click the idea button
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors
+      description: Open DevTools on the LinkedIn tab (and the service worker, for generation problems), then paste any red errors.
+      render: text

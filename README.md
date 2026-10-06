@@ -3,6 +3,10 @@
 A Chrome MV3 extension that adds a idea button to LinkedIn comment editors and
 message threads, extracting context into a copyable prompt modal. Runs as a content script only.
 
+> LinkedIn Assist is an independent project. It is not affiliated with, endorsed by, or sponsored by LinkedIn. LinkedIn is a trademark of its owner. Using it is your responsibility: read LinkedIn's terms, review every draft, and post it yourself.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ## Features
 
 - Injects a idea button next to each LinkedIn comment editor
@@ -91,6 +95,23 @@ bun run clean
 - **Chrome MV3**: Manifest V3 content script API
 - **No external APIs**: Pure DOM extraction
 
+## Install from a release
+
+1. Download `linkedin-assist-v<version>.zip` from the [latest release](https://github.com/ersanyamarya/linkedin-assist/releases/latest) and unzip it.
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the unzipped folder.
+4. Refresh LinkedIn.
+
+Chrome doesn't update unpacked extensions. To upgrade, replace the folder's contents with the new zip and click the reload icon on the extension card.
+
+## Releasing
+
+1. Bump `version` in `public/manifest.json` and add a `## [x.y.z] - date` section to `CHANGELOG.md`.
+2. Commit, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. The Release workflow builds, zips, and publishes the GitHub release with the changelog section as its notes.
+
+To build the zip locally: `bun run package` (writes `release/`).
+
 ## Loading the Extension
 
 1. Run `bun run build` to create the `dist/` folder
@@ -120,3 +141,11 @@ bun run clean
 ---
 
 Built with [Bun](https://bun.com).
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md), and report security problems privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE)
