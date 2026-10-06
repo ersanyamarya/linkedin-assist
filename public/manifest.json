@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "LinkedIn Assist",
-  "description": "Generates suggestions for LinkedIn messages and comments using AI.",
+  "name": "Netwrite",
+  "description": "Drafts comments, replies, and connection notes for LinkedIn pages. Bring your own AI provider (optional).",
   "version": "0.2.0",
   "content_scripts": [
     {
@@ -39,7 +39,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "scraper-light",
+    "default_title": "Netwrite",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png"

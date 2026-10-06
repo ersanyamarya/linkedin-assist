@@ -1,4 +1,4 @@
-# LinkedIn Assist — Copilot instructions
+# Netwrite — Copilot instructions
 
 ## Big picture (MV3 content script only)
 

@@ -17,6 +17,7 @@ Each release's notes are the section for its version. The release workflow copie
 
 ### Changed
 
+- Renamed from LinkedIn Assist to Netwrite, with a new logo and colors.
 - Redesigned prompt windows with steps for inputs, prompt, and answer.
 - Notices replace browser alerts.
 

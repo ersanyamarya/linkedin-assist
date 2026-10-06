@@ -1,15 +1,15 @@
 /* ==========================================================================
-   LinkedIn Assist — Component Styles
-   Prefix: la- (linkedin-assist)
+   Netwrite — Component Styles
+   Prefix: la- (the internal class prefix; kept from the old name)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    Core Variables
    -------------------------------------------------------------------------- */
 :root {
-	--la-primary: #0a66c2;
-	--la-primary-hover: #084fa3;
-	--la-primary-tint: rgba(10, 102, 194, 0.12);
+	--la-primary: #4338ca;
+	--la-primary-hover: #3730a3;
+	--la-primary-tint: rgba(67, 56, 202, 0.12);
 	--la-primary-contrast: #fff;
 	--la-text: #111;
 	--la-text-muted: #666;

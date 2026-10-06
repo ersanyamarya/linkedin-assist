@@ -59,7 +59,7 @@ export const generateReply = (prompt: string, { onDelta, onDone, onError }: Gene
 		port = chrome.runtime.connect(undefined, { name: AI_GENERATE_PORT });
 	} catch {
 		// The extension was reloaded or updated since this page loaded.
-		queueMicrotask(() => onError("LinkedIn Assist was updated. Reload the page and try again."));
+		queueMicrotask(() => onError("Netwrite was updated. Reload the page and try again."));
 		return () => {};
 	}
 

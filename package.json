@@ -1,5 +1,5 @@
 {
-  "name": "linkedin-assist",
+  "name": "netwrite",
   "module": "index.ts",
   "type": "module",
   "private": true,

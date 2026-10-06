@@ -16,7 +16,7 @@ import sharp from "sharp";
 const OUT_DIR = "store-assets";
 const CHROME = process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-const BLUE = "#0a66c2";
+const BRAND = "#4338ca";
 // Single quotes: this string is also used inside style="" attributes.
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
@@ -45,7 +45,7 @@ body{margin:0;width:1280px;height:800px;overflow:hidden;background:#f3f2ef;font-
   display:flex;flex-direction:column;justify-content:center;padding:0 64px}
 .cap h1{margin:0;font-size:38px;font-weight:600;color:#111;letter-spacing:-0.01em}
 .cap p{margin:6px 0 0;font-size:20px;color:#555}
-.cap::after{content:"";position:absolute;left:0;bottom:-1px;width:160px;height:3px;background:${BLUE}}
+.cap::after{content:"";position:absolute;left:0;bottom:-1px;width:160px;height:3px;background:${BRAND}}
 .feed{position:absolute;top:116px;left:0;right:0;bottom:0;padding:32px 0;display:flex;flex-direction:column;gap:20px;align-items:center}
 .card{width:620px;height:260px;background:#fff;border-radius:8px;border:1px solid #e2e2e2;padding:20px}
 .card i{display:block;height:12px;border-radius:6px;background:#e9e8e4;margin-bottom:14px}
@@ -87,18 +87,18 @@ const badge = (logo: string, size: number) =>
 
 const promoSmall = (
 	logo: string
-) => `<!doctype html><body style="margin:0;width:440px;height:280px;background:${BLUE};font-family:${FONT};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center">
+) => `<!doctype html><body style="margin:0;width:440px;height:280px;background:${BRAND};font-family:${FONT};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center">
 ${badge(logo, 96)}
-<div style="font-size:38px;font-weight:600;letter-spacing:-0.01em">LinkedIn Assist</div>
+<div style="font-size:38px;font-weight:600;letter-spacing:-0.01em">Netwrite</div>
 <div style="font-size:19px;line-height:1.3;opacity:.92;max-width:340px">Draft comments, replies, and connection notes</div></body>`;
 
 const promoMarquee = (
 	logo: string,
 	modal: string
-) => `<!doctype html><body style="margin:0;width:1400px;height:560px;background:${BLUE};font-family:${FONT};color:#fff;position:relative;overflow:hidden">
+) => `<!doctype html><body style="margin:0;width:1400px;height:560px;background:${BRAND};font-family:${FONT};color:#fff;position:relative;overflow:hidden">
 <div style="position:absolute;left:96px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:22px;width:560px">
 ${badge(logo, 112)}
-<div style="font-size:64px;font-weight:600;letter-spacing:-0.02em;line-height:1.05">LinkedIn Assist</div>
+<div style="font-size:64px;font-weight:600;letter-spacing:-0.02em;line-height:1.05">Netwrite</div>
 <div style="font-size:28px;line-height:1.35;opacity:.92">Draft comments, replies, and connection notes. Bring your own AI provider.</div></div>
 <img src="${modal}" style="position:absolute;left:740px;top:70px;width:560px;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.35)"></body>`;
 
@@ -134,7 +134,9 @@ async function main() {
 		if (subline) subline.textContent = sub;
 	}, CAPTIONS.answer);
 	await finish(await page.screenshot(), "screenshot-2-answer.png");
-	const modalPng = await page.locator(".la-modal__box").screenshot();
+	const box = await page.locator(".la-modal__box").boundingBox();
+	if (!box) throw new Error("Modal not found for the marquee crop");
+	const modalPng = await page.screenshot({ clip: box });
 
 	// 3. Connection note
 	await page.close();
@@ -154,7 +156,7 @@ async function main() {
 		`<!doctype html><body style="margin:0;width:1280px;height:800px;background:#f3f2ef;overflow:hidden;font-family:${FONT}">
 <style>.cap{height:116px;background:#fff;border-bottom:1px solid #e2e2e2;display:flex;flex-direction:column;justify-content:center;padding:0 64px;position:relative}
 .cap h1{margin:0;font-size:38px;font-weight:600;color:#111;letter-spacing:-0.01em}.cap p{margin:6px 0 0;font-size:20px;color:#555}
-.cap::after{content:"";position:absolute;left:0;bottom:-1px;width:160px;height:3px;background:${BLUE}}</style>
+.cap::after{content:"";position:absolute;left:0;bottom:-1px;width:160px;height:3px;background:${BRAND}}</style>
 <header class="cap"><h1>${CAPTIONS.provider[0]}</h1><p>${CAPTIONS.provider[1]}</p></header>
 <iframe src="${optionsUrl}" style="border:0;width:1280px;height:684px;display:block"></iframe></body>`
 	);
@@ -169,6 +171,8 @@ async function main() {
 	await finish(await tile.screenshot(), "promo-small.png");
 	await tile.setViewportSize({ width: 1400, height: 560 });
 	await tile.setContent(promoMarquee(logo, `data:image/png;base64,${modalPng.toString("base64")}`));
+	await tile.waitForFunction(() => [...document.images].every((img) => img.complete));
+	await tile.waitForTimeout(200);
 	await finish(await tile.screenshot(), "promo-marquee.png");
 
 	await browser.close();

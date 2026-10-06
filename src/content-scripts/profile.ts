@@ -149,12 +149,12 @@ const readProfile = async (button: HTMLButtonElement): Promise<Profile | undefin
 
 	const parsed = ProfileSchema.safeParse(snapshot);
 	if (!parsed.success) {
-		console.warn("LinkedIn Assist profile schema validation failed:", { issues: parsed.error.issues, snapshot });
+		console.warn("Netwrite profile schema validation failed:", { issues: parsed.error.issues, snapshot });
 		showNotice("Couldn't use this profile's details", "Something in them didn't look right. Reload the page and try again.");
 		return;
 	}
 
-	console.log("LinkedIn Assist extracted from profile:", parsed.data);
+	console.log("Netwrite extracted from profile:", parsed.data);
 	return parsed.data;
 };
 

@@ -1,5 +1,5 @@
 "use strict";
-// Zips dist/ into release/linkedin-assist-v<version>.zip, with manifest.json at the zip root.
+// Zips dist/ into release/netwrite-v<version>.zip, with manifest.json at the zip root.
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -15,7 +15,7 @@ if (!fs.existsSync(manifestPath)) {
 
 const { version } = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 const outDir = path.join(root, "release");
-const zip = path.join(outDir, `linkedin-assist-v${version}.zip`);
+const zip = path.join(outDir, `netwrite-v${version}.zip`);
 
 fs.mkdirSync(outDir, { recursive: true });
 fs.rmSync(zip, { force: true });

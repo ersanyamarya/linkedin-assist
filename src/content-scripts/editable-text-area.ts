@@ -93,7 +93,7 @@ const openMessagingPromptModal = async (editableTextArea: Element) => {
 
 	const parsed = MessagesSchema.safeParse({ senderName, messages });
 	if (!parsed.success) {
-		console.warn("LinkedIn Assist messaging schema validation failed:", {
+		console.warn("Netwrite messaging schema validation failed:", {
 			issues: parsed.error.issues,
 			senderName,
 			messages,
@@ -102,7 +102,7 @@ const openMessagingPromptModal = async (editableTextArea: Element) => {
 		return;
 	}
 
-	console.log("LinkedIn Assist extracted from message:", {
+	console.log("Netwrite extracted from message:", {
 		senderName,
 		messages,
 	});
@@ -129,7 +129,7 @@ const openPostPromptModal = async (editableTextArea: Element) => {
 
 	const parsed = PostCommentsSchema.safeParse({ postText, comments });
 	if (!parsed.success) {
-		console.warn("LinkedIn Assist post schema validation failed:", {
+		console.warn("Netwrite post schema validation failed:", {
 			issues: parsed.error.issues,
 			postText,
 			comments,
@@ -138,7 +138,7 @@ const openPostPromptModal = async (editableTextArea: Element) => {
 		return;
 	}
 
-	console.log("LinkedIn Assist extracted from post:", {
+	console.log("Netwrite extracted from post:", {
 		postText,
 		comments,
 	});
@@ -180,7 +180,7 @@ const openRepostPromptModal = async (repostButton: Element) => {
 
 	const parsed = RepostSchema.safeParse({ postText });
 	if (!parsed.success) {
-		console.warn("LinkedIn Assist repost schema validation failed:", {
+		console.warn("Netwrite repost schema validation failed:", {
 			issues: parsed.error.issues,
 			postText,
 		});
@@ -188,7 +188,7 @@ const openRepostPromptModal = async (repostButton: Element) => {
 		return;
 	}
 
-	console.log("LinkedIn Assist extracted for repost:", { postText });
+	console.log("Netwrite extracted for repost:", { postText });
 	const voiceSamples = await loadVoiceSamples();
 	createRepostPromptModal({
 		postText: parsed.data.postText,

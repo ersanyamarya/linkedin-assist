@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "linkedin-assist",
+      "name": "netwrite",
       "dependencies": {
         "openai": "7.23.0",
         "zod": "4.3.6",

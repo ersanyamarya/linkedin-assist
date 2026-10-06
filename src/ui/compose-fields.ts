@@ -99,7 +99,7 @@ export const instructionsFields = (subject: string, placeholder: string) => {
 export const submitIfValid = <T>(schema: z.ZodType<T>, options: T, onValid: (data: T) => void): boolean => {
 	const parsed = schema.safeParse(options);
 	if (!parsed.success) {
-		console.warn("LinkedIn Assist prompt input validation failed:", parsed.error.issues);
+		console.warn("Netwrite prompt input validation failed:", parsed.error.issues);
 		showNotice("Some inputs need a look", "Check your take and the options, then generate the prompt again.");
 		return false;
 	}
